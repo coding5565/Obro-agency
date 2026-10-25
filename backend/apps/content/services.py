@@ -82,7 +82,8 @@ def send_to_client(item, *, by):
     item.status = cm.CLIENT_REVIEW
     item.save(update_fields=["status", "updated_at"])
     notify(project_client_users(item.project), "content.review", f"Tasdiqlash kutmoqda: {item.title}",
-           link=f"/portal/approvals/{item.pk}")
+           body=f"{item.get_kind_display()} · versiya {version.number}", link=f"/portal/approvals/{item.pk}",
+           payload={"item_id": item.pk})
     return item
 
 

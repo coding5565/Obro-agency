@@ -5,6 +5,7 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
+from rest_framework import serializers as drf_serializers
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -23,6 +24,7 @@ from apps.finance.models import (
     MonthClose,
     Payment,
 )
+from apps.finance.rates import RateFetchError, store_cbu_rate
 from apps.payroll.models import Accrual
 from common import access, audit
 from common.dates import month_range, parse_month
@@ -39,6 +41,17 @@ class ExchangeRateViewSet(viewsets.ModelViewSet):
     required_perms = {"read": access.FINANCE_MANAGE, "write": access.FINANCE_MANAGE}
     filterset_fields = ["currency", "date"]
     http_method_names = ["get", "post", "patch", "head", "options"]
+
+    @action(detail=False, methods=["post"])
+    def fetch(self, request):
+        """Markaziy bank kursini olib saqlaydi (bugun yoki berilgan sana)."""
+        raw = request.data.get("date")
+        day = drf_serializers.DateField().to_internal_value(raw) if raw else timezone.localdate()
+        try:
+            rate = store_cbu_rate(request.data.get("currency", "USD"), day)
+        except RateFetchError as exc:
+            raise ValidationError({"detail": str(exc)}) from exc
+        return Response(s.ExchangeRateSerializer(rate).data)
 
 
 class CashAccountViewSet(viewsets.ModelViewSet):

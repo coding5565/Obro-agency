@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { get, post } from '../../shared/api/client'
 import type { Expense, ExpenseCategory, Invoice, Page, Payment } from '../../shared/api/types'
-import { date, money, monthKey, monthLabel, shiftMonth, today } from '../../shared/lib/format'
+import { date, money, monthKey, monthLabel, rate, shiftMonth, today } from '../../shared/lib/format'
 import { Badge, Button, Card, Empty, ErrorBox, Field, Input, Kicker, Modal, PageHeader, Select, Spinner, Stat, StatusBadge, Table, Tabs } from '../../shared/ui'
 
 type Tab = 'invoices' | 'payments' | 'expenses' | 'summary' | 'rates'
@@ -121,7 +121,7 @@ function Payments() {
             <tr key={p.id} className={p.cancelled_at ? 'opacity-50' : ''}>
               <td className="num">{date(p.paid_on)}</td>
               <td className="font-semibold">{p.client_name}</td>
-              <td className="num">{money(p.amount, p.currency)}{p.currency === 'USD' && <div className="text-[11px] text-muted">kurs {p.rate_to_uzs}</div>}</td>
+              <td className="num">{money(p.amount, p.currency)}{p.currency === 'USD' && <div className="text-[11px] text-muted">kurs {rate(p.rate_to_uzs)}</div>}</td>
               <td className="num">{money(p.amount_uzs)}</td>
               <td>{p.method_label}</td>
               <td className="num text-[12px]">{p.allocations.map((a) => a.invoice_number).join(', ')}{Number(p.unallocated_amount) > 0 && <div><Badge tone="info">avans {money(p.unallocated_amount, p.currency)}</Badge></div>}</td>
@@ -243,20 +243,30 @@ function Rates() {
   const list = useQuery({ queryKey: ['rates'], queryFn: () => get<Page<{ id: number; date: string; currency: string; rate_to_uzs: string }>>('/finance/rates/') })
   const [form, setForm] = useState({ date: today(), rate_to_uzs: '' })
   const save = useMutation({ mutationFn: () => post('/finance/rates/', { ...form, currency: 'USD', source: 'manual' }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rates'] }) })
+  const fetchCbu = useMutation({
+    mutationFn: () => post<{ date: string; rate_to_uzs: string }>('/finance/rates/fetch/', { date: form.date }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rates'] }),
+  })
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <Kicker>Dollar kursi (Markaziy bank)</Kicker>
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <Button variant="dark" onClick={() => fetchCbu.mutate()} disabled={fetchCbu.isPending}><RefreshCw size={15} />cbu.uz’dan olish</Button>
+          {fetchCbu.data && <span className="text-[13px]">{date(fetchCbu.data.date)}: <b className="num">{rate(fetchCbu.data.rate_to_uzs)}</b></span>}
+        </div>
+        <ErrorBox error={fetchCbu.error} />
+        <p className="mb-3 text-[12.5px] text-muted">Yoki qo‘lda kiriting (masalan, bank kursi bo‘yicha kelishilgan bo‘lsa):</p>
         <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} className="flex flex-wrap items-end gap-2">
           <Field label="Sana"><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
           <Field label="1$ = so‘m"><Input type="number" step="0.01" value={form.rate_to_uzs} onChange={(e) => setForm({ ...form, rate_to_uzs: e.target.value })} required /></Field>
           <Button type="submit">Saqlash</Button>
         </form>
         <ErrorBox error={save.error} />
-        <p className="mt-2 text-[12px] text-muted">Keyingi bosqichda kurs cbu.uz’dan har kuni avtomatik olinadi.</p>
+        <p className="mt-2 text-[12px] text-muted">To‘lov kiritilganda o‘sha kunning kursi bazada bo‘lmasa, cbu.uz’dan o‘zi olinadi. Bot ishlab tursa, har kuni ertalab ham olinadi.</p>
       </Card>
       <Table head={['Sana', 'Kurs']}>
-        {list.data?.results.map((r) => <tr key={r.id}><td className="num">{date(r.date)}</td><td className="num">{money(r.rate_to_uzs)}</td></tr>)}
+        {list.data?.results.map((r) => <tr key={r.id}><td className="num">{date(r.date)}</td><td className="num">{rate(r.rate_to_uzs)}</td></tr>)}
       </Table>
     </div>
   )

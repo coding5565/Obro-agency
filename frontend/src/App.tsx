@@ -6,6 +6,7 @@ import { StaffLayout } from './layouts/StaffLayout'
 import { AcceptInvitePage } from './pages/AcceptInvite'
 import { LoginPage } from './pages/Login'
 import { NotificationsPage } from './pages/Notifications'
+import { ProfilePage } from './pages/Profile'
 import { PortalApprovalDetail, PortalApprovals } from './pages/portal/Approvals'
 import { PortalCalendar } from './pages/portal/Calendar'
 import { PortalHome } from './pages/portal/Home'
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="tariffs" element={<Need perm="catalog.view"><TariffsPage /></Need>} />
               <Route path="team" element={<Need perm="users.view"><TeamPage /></Need>} />
               <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="profile" element={<ProfilePage />} />
             </Route>
             <Route path="/portal" element={<Guard kind="client"><PortalLayout /></Guard>}>
               <Route index element={<PortalHome />} />
@@ -93,6 +95,7 @@ export default function App() {
               <Route path="invoices" element={<PortalInvoices />} />
               <Route path="request" element={<PortalRequest />} />
               <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="profile" element={<ProfilePage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

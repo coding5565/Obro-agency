@@ -13,6 +13,7 @@ from apps.notifications import views as notifications
 from apps.payroll import views as payroll
 from apps.portal import views as portal
 from apps.tasks import views as tasks
+from apps.telegram import views as telegram
 from apps.worklog import views as worklog
 
 router = DefaultRouter()
@@ -69,9 +70,26 @@ portal_urls = [
     path("requests/", portal.RequestView.as_view(), name="portal-requests"),
 ]
 
+bot_urls = [
+    path("link/", telegram.BotLinkView.as_view()),
+    path("unlink/", telegram.BotUnlinkView.as_view()),
+    path("me/", telegram.BotMeView.as_view()),
+    path("outbox/", telegram.BotOutboxView.as_view()),
+    path("outbox/ack/", telegram.BotOutboxAckView.as_view()),
+    path("tasks/", telegram.BotTasksView.as_view()),
+    path("tasks/<int:pk>/done/", telegram.BotTaskDoneView.as_view()),
+    path("projects/", telegram.BotProjectsView.as_view()),
+    path("worklog/", telegram.BotWorklogView.as_view()),
+    path("approvals/<int:pk>/", telegram.BotApprovalView.as_view()),
+    path("jobs/daily/", telegram.BotDailyJobView.as_view()),
+    path("jobs/evening/", telegram.BotEveningJobView.as_view()),
+]
+
 urlpatterns = [
     path("auth/", include(auth_urls)),
     path("portal/", include(portal_urls)),
+    path("bot/", include(bot_urls)),
+    path("telegram/link/", telegram.LinkView.as_view(), name="telegram-link"),
     path("dashboard/", core.DashboardView.as_view(), name="dashboard"),
     path("finance/debts/", finance.DebtsView.as_view(), name="debts"),
     path("finance/summary/", finance.MonthSummaryView.as_view(), name="finance-summary"),

@@ -1,15 +1,16 @@
-"""Bildirishnomalar. Telegram'ga yuborish keyingi bosqichda fon ishi sifatida qo'shiladi."""
+"""Bildirishnomalar. Panelda ko'rinadi; Telegram ulagan foydalanuvchiga bot ham yuboradi (apps.telegram)."""
 from apps.notifications.models import Notification
 
 
-def notify(users, kind, title, body="", link=""):
+def notify(users, kind, title, body="", link="", payload=None):
     seen = set()
     rows = []
     for user in users:
         if user is None or user.pk in seen or not user.is_active:
             continue
         seen.add(user.pk)
-        rows.append(Notification(user=user, kind=kind, title=title[:200], body=body, link=link))
+        rows.append(Notification(user=user, kind=kind, title=title[:200], body=body, link=link,
+                                 payload=payload or {}))
     Notification.objects.bulk_create(rows)
     return rows
 

@@ -31,6 +31,15 @@ npm run dev
 
 Brauzerda: http://127.0.0.1:5173
 
+4. Telegram bot (ixtiyoriy, token kerak — `docs/telegram-bot.md`):
+
+```powershell
+cd bot
+.venv\Scripts\python.exe -m obro_bot
+```
+
+Dollar kursi: to‘lov kiritilganda kun kursi bazada bo‘lmasa, cbu.uz’dan o‘zi olinadi. Qo‘lda olish: `manage.py fetch_rates` yoki panel → Moliya → Kurs → «cbu.uz’dan olish».
+
 Birinchi marta, bo‘sh bazada: `manage.py seed_obro` (tariflar, lavozimlar, foiz qoidalari) yoki `seed_obro --demo` (+ sinov akkauntlari).
 
 ### Demo akkauntlar (faqat lokal sinov uchun)
@@ -64,7 +73,9 @@ backend/
   apps/payroll       foizli maosh: qoida, hisoblanma, vedomost
   apps/portal        mijoz kabineti API (faqat ruxsat etilgan maydonlar)
   apps/core          audit jurnali, bosh ekran, seed buyrug‘i
+  apps/telegram      bot uchun API: ulash, xabarlar navbati, buyruqlar, rejali ishlar
   common/calc        pul hisob-kitobi (sof funksiyalar, testlangan)
+bot/obro_bot/        Telegram bot (aiogram 3): bildirishnomalar, /bugun, /jurnal, tasdiqlash tugmalari
 frontend/src/
   layouts/           jamoa va mijoz qobig‘i
   pages/team         jamoa sahifalari

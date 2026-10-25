@@ -64,6 +64,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=20, choices=access.ROLE_CHOICES, default=access.CREATOR)
     positions = models.ManyToManyField(Position, blank=True, related_name="users")
     telegram_chat_id = models.BigIntegerField(null=True, blank=True, unique=True)
+    telegram_username = models.CharField(max_length=64, blank=True)
+    telegram_linked_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False, help_text="Django admin paneliga kira oladimi")
     date_joined = models.DateTimeField(default=timezone.now)

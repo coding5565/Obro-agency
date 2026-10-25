@@ -19,6 +19,7 @@ from apps.catalog.models import BASIC_FEATURES, FULL_FEATURES, Service, Tariff, 
 from apps.clients.models import Client, ClientMembership, Project, ProjectAssignment, SocialAccount
 from apps.content import services as content_services
 from apps.finance.models import CashAccount, ExchangeRate, ExpenseCategory
+from apps.finance.rates import RateFetchError, store_cbu_rate
 from apps.metrics.models import AdCampaign, AdStat, MetricSnapshot
 from apps.payroll.models import CompensationRule
 from common import access
@@ -144,7 +145,11 @@ class Command(BaseCommand):
             for i, (kind, title) in enumerate(plan):
                 content_services.create_item(project=project, by=smm, kind=kind, title=title,
                                              planned_date=start + timedelta(days=2 + i * 4))
-            ExchangeRate.objects.get_or_create(date=today, currency="USD", defaults={"rate_to_uzs": Decimal("12650")})
+            try:
+                store_cbu_rate("USD", today)
+            except RateFetchError:
+                ExchangeRate.objects.get_or_create(date=today, currency="USD",
+                                                   defaults={"rate_to_uzs": Decimal("12650"), "source": "demo"})
             for weeks, followers in enumerate([11840, 11920, 12050, 12210, 12480]):
                 MetricSnapshot.objects.get_or_create(
                     social_account=account, date=today - timedelta(days=7 * (4 - weeks)),

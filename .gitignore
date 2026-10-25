@@ -17,3 +17,5 @@ frontend/dist/
 .pgdata/
 .pgdata.log
 *.log
+bot/.venv/
+bot/.env

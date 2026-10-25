@@ -535,6 +535,129 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/v1/bot/approvals/{id}/:
+    get:
+      operationId: v1_bot_approvals_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: v1_bot_approvals_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/jobs/daily/:
+    post:
+      operationId: v1_bot_jobs_daily_create
+      description: 'Bot har kuni ertalab chaqiradi: kursni oladi va rahbarlarga xulosa
+        yuboradi.'
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/jobs/evening/:
+    post:
+      operationId: v1_bot_jobs_evening_create
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/link/:
+    post:
+      operationId: v1_bot_link_create
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/me/:
+    get:
+      operationId: v1_bot_me_retrieve
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/outbox/:
+    get:
+      operationId: v1_bot_outbox_retrieve
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/outbox/ack/:
+    post:
+      operationId: v1_bot_outbox_ack_create
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/projects/:
+    get:
+      operationId: v1_bot_projects_retrieve
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/tasks/:
+    get:
+      operationId: v1_bot_tasks_retrieve
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/tasks/{id}/done/:
+    post:
+      operationId: v1_bot_tasks_done_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/unlink/:
+    post:
+      operationId: v1_bot_unlink_create
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
+  /api/v1/bot/worklog/:
+    post:
+      operationId: v1_bot_worklog_create
+      tags:
+      - v1
+      responses:
+        '200':
+          description: No response body
   /api/v1/catalog/services/:
     get:
       operationId: v1_catalog_services_list
@@ -2801,6 +2924,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/ExchangeRate'
           description: ''
+  /api/v1/finance/rates/fetch/:
+    post:
+      operationId: v1_finance_rates_fetch_create
+      description: Markaziy bank kursini olib saqlaydi (bugun yoki berilgan sana).
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExchangeRateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExchangeRateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExchangeRateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeRate'
+          description: ''
   /api/v1/finance/summary/:
     get:
       operationId: v1_finance_summary_retrieve
@@ -4218,6 +4368,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/Task'
           description: ''
+  /api/v1/telegram/link/:
+    get:
+      operationId: v1_telegram_link_retrieve
+      description: 'Panel: «Telegram’ni ulash». GET — holat, POST — yangi havola,
+        DELETE — uzish.'
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: v1_telegram_link_create
+      description: 'Panel: «Telegram’ni ulash». GET — holat, POST — yangi havola,
+        DELETE — uzish.'
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: v1_telegram_link_destroy
+      description: 'Panel: «Telegram’ni ulash». GET — holat, POST — yangi havola,
+        DELETE — uzish.'
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/users/:
     get:
       operationId: v1_users_list

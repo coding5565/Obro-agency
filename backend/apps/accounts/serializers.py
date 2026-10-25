@@ -32,11 +32,15 @@ class MeSerializer(serializers.ModelSerializer):
     permissions = serializers.SerializerMethodField()
     clients = serializers.SerializerMethodField()
     is_client = serializers.BooleanField(read_only=True)
+    telegram_linked = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ["id", "phone", "email", "full_name", "role", "role_label", "positions", "permissions",
-                  "is_client", "clients"]
+                  "is_client", "clients", "telegram_linked"]
+
+    def get_telegram_linked(self, user):
+        return user.telegram_chat_id is not None
 
     def get_permissions(self, user):
         return sorted(user.get_permissions())

@@ -16,6 +16,12 @@ export function money(amount: string | number | null | undefined, currency: stri
   return currency === 'USD' ? `$${text}` : `${text} so‘m`
 }
 
+// Kurs: 11838.9200 → «11 838,92 so‘m»
+export function rate(value: string | number | null | undefined) {
+  if (value === null || value === undefined || value === '') return '—'
+  return `${groupDigits(Number(value).toFixed(2))} so‘m`
+}
+
 export function num(value: string | number | null | undefined) {
   if (value === null || value === undefined) return '—'
   return groupDigits(String(value))

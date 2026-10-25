@@ -6,7 +6,8 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.finance.models import ExchangeRate, Expense, Invoice, InvoiceLine, MonthClose, Payment, PaymentAllocation
+from apps.finance.models import Expense, Invoice, InvoiceLine, MonthClose, Payment, PaymentAllocation
+from apps.finance.rates import rate_for_day
 from apps.notifications.services import notify, project_client_users
 from common import access, audit
 from common.calc import invoices as calc
@@ -20,7 +21,7 @@ def resolve_rate(currency, day, given=None):
     if given not in (None, ""):
         rate = D(given)
     else:
-        rate = ExchangeRate.rate_on(currency, day)
+        rate = rate_for_day(currency, day)
     if not rate or rate <= 0:
         raise ValidationError({"rate_to_uzs": f"{day:%d.%m.%Y} uchun {currency} kursi yo‘q. Kursni kiriting."})
     return rate

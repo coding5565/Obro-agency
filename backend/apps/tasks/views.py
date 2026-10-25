@@ -2,17 +2,13 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.clients.selectors import visible_projects
 from apps.tasks import models as tm
-from apps.worklog.services import auto_entry
+from apps.tasks.services import set_task_status
 from common import access
 from common.permissions import ObroPermission
-
-# Vazifa lavozimi → jurnal yozuvi turi
-POSITION_KIND = {"smm_target": "script", "video_mobilo": "shooting", "design_montage": "editing"}
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -66,22 +62,5 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], url_path="set-status")
     def set_status(self, request, pk=None):
-        task = self.get_object()
-        new_status = request.data.get("status")
-        if new_status not in dict(tm.Task.STATUS_CHOICES):
-            raise ValidationError({"status": "Noto‘g‘ri holat"})
-        is_manager = request.user.has_obro_perm(access.TASKS_MANAGE)
-        if task.assignee_id not in (request.user.id, None) and not is_manager:
-            raise ValidationError({"status": "Bu vazifa sizga berilmagan"})
-        if new_status == tm.DONE and task.status != tm.DONE:
-            task.completed_at = timezone.now()
-            if task.assignee_id is None:
-                task.assignee = request.user
-            kind = POSITION_KIND.get(task.position.code if task.position else "", "other")
-            # Ish turi alohida ko'rsatiladi, sarlavhada faqat «nima ustida» qolsin.
-            item = task.content_item
-            title = f"{item.get_kind_display()} «{item.title}»" if item else task.title
-            auto_entry(user=request.user, project=task.project, kind=kind, title=title, content_item=item, task=task)
-        task.status = new_status
-        task.save(update_fields=["status", "completed_at", "assignee"])
+        task = set_task_status(self.get_object(), request.data.get("status"), by=request.user)
         return Response(TaskSerializer(task, context={"request": request}).data)

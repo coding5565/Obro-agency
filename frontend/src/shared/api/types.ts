@@ -36,6 +36,7 @@ export interface Me {
   permissions: string[]
   is_client: boolean
   clients: ClientAccess[]
+  telegram_linked: boolean
 }
 
 export interface StaffUser {

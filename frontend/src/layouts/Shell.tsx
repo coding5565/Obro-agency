@@ -69,12 +69,18 @@ export function Shell({ nav, footer }: { nav: NavItem[]; footer?: ReactNode }) {
       </div>
       <div className="mt-6 border-t border-ink-3 pt-4">
         {footer && <div className="mb-3 px-1 text-[12px]">{footer}</div>}
-        <div className="flex items-center gap-3 rounded-xl px-1">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink-3 font-display text-[11px] font-bold text-gold">{initials(user?.full_name)}</span>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[13px] font-bold text-ivory">{user?.full_name}</div>
-            <div className="truncate text-[11.5px] text-muted-2">{user?.role_label}</div>
-          </div>
+        <div className="flex items-center gap-1">
+          <Link to={portal ? '/portal/profile' : '/app/profile'} onClick={() => setOpen(false)} title="Profil: Telegram va parol"
+            className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-1 py-1 transition-colors hover:bg-ink-2">
+            <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink-3 font-display text-[11px] font-bold text-gold">
+              {initials(user?.full_name)}
+              {user && !user.telegram_linked && <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-gold ring-2 ring-ink" title="Telegram ulanmagan" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13px] font-bold text-ivory">{user?.full_name}</div>
+              <div className="truncate text-[11.5px] text-muted-2">{user?.telegram_linked ? user?.role_label : 'Telegram’ni ulash →'}</div>
+            </div>
+          </Link>
           <button onClick={logout} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-muted-2 transition-colors hover:bg-ink-3 hover:text-ivory" title="Chiqish" aria-label="Chiqish"><LogOut size={17} /></button>
         </div>
       </div>

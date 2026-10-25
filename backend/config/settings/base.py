@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "apps.payroll",
     "apps.notifications",
     "apps.portal",
+    "apps.telegram",
 ]
 
 MIDDLEWARE = [
@@ -176,6 +177,15 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "")
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
+
+# Markaziy bank kursi: to'lov kunida bazada kurs bo'lmasa, cbu.uz'dan olinadi.
+CBU_AUTO_FETCH = env_bool("CBU_AUTO_FETCH", True)
+CBU_TIMEOUT = int(env("CBU_TIMEOUT", "6"))
+
+# Telegram bot. Bot API'ga faqat shu maxfiy kalit bilan murojaat qiladi (X-Bot-Secret sarlavhasi).
+TELEGRAM_BOT_USERNAME = env("TELEGRAM_BOT_USERNAME", "")
+TELEGRAM_BOT_API_SECRET = env("TELEGRAM_BOT_API_SECRET", "")
+TELEGRAM_LINK_MINUTES = 15
 
 # Agentlik sozlamalari
 BASE_CURRENCY = "UZS"
