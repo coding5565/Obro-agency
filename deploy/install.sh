@@ -11,7 +11,7 @@
 # Ishlatish (root):  PUBLIC_PORT=8088 API_PORT=8710 bash install.sh
 set -euo pipefail
 
-PUBLIC_PORT="${PUBLIC_PORT:-8088}"
+PUBLIC_PORT="${PUBLIC_PORT:-8090}"
 API_PORT="${API_PORT:-8710}"
 SERVER_NAME="${SERVER_NAME:-_}"
 REPO="${REPO:-https://github.com/coding5565/Obro-agency.git}"
@@ -25,7 +25,7 @@ log() { printf '\n== %s\n' "$*"; }
 
 log "Paketlar (faqat yetishmaganlari o'rnatiladi)"
 need=()
-for pkg in git nginx postgresql python3-venv python3-dev libpq-dev; do
+for pkg in git nginx postgresql python3-venv; do
   dpkg -s "$pkg" >/dev/null 2>&1 || need+=("$pkg")
 done
 if [ ${#need[@]} -gt 0 ]; then
