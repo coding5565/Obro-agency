@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+backend/.venv/
+backend/.env
+backend/media/
+backend/staticfiles/
+backend/db.sqlite3
+.ruff_cache/
+.pytest_cache/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Lokal PostgreSQL ma'lumotlari va loglar
+.pgdata/
+.pgdata.log
+*.log

@@ -1,0 +1,122 @@
+@import 'tailwindcss';
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+@import '@fontsource/manrope/700.css';
+@import '@fontsource/manrope/800.css';
+@import '@fontsource/unbounded/600.css';
+@import '@fontsource/unbounded/700.css';
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
+@import '@fontsource/instrument-serif/400-italic.css';
+
+/* OBRO AGENCY — tijoriy taklif slaydlaridagi palitra.
+   Oltin #FFC21F — faqat aksent (asosiy tugma, faol belgi, halqalar). Oq/qog'oz fonda oltin matn ishlatilmaydi:
+   kontrast yetmaydi, havola va kichik aksent uchun bronza. Holat ranglari (yashil, to'q sariq, qizil) oltindan alohida. */
+@theme {
+  --color-gold: #ffc21f;
+  --color-gold-deep: #e3a800;
+  --color-gold-soft: #fff4d1;
+  --color-gold-ink: #3b2f07;
+  --color-ink: #121210;
+  --color-ink-2: #1c1c19;
+  --color-ink-3: #2a2823;
+  --color-graphite: #2e2d29;
+  --color-paper: #faf8f3;
+  --color-ivory: #f3efe6;
+  --color-line: #e4ded1;
+  --color-line-soft: #eee9de;
+  --color-line-strong: #dcd5c6;
+  --color-text-2: #4a463e;
+  --color-muted: #6f6a5f;
+  --color-muted-2: #a19b8d;
+  --color-bronze: #8a5e00;
+  --color-ok: #1f7a4d;
+  --color-ok-soft: #e3f1e9;
+  --color-warn: #b45309;
+  --color-warn-soft: #fbebdd;
+  --color-bad: #c62828;
+  --color-bad-soft: #fbe4e2;
+  --color-info: #2457a6;
+  --color-info-soft: #e6edf8;
+
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-display: 'Unbounded', 'Manrope', sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+
+  --shadow-card: 0 1px 0 rgb(18 18 16 / 0.03), 0 1px 3px rgb(18 18 16 / 0.05);
+  --shadow-raise: 0 2px 4px rgb(18 18 16 / 0.04), 0 12px 32px -8px rgb(18 18 16 / 0.16);
+
+  --animate-enter: enter 180ms ease-out;
+  --animate-fade: fade 160ms ease-out;
+}
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+  body {
+    @apply bg-paper font-sans text-[14px] leading-[1.5] text-ink;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p,
+  li {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-gold-deep);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      transition-duration: 1ms !important;
+    }
+  }
+}
+
+/* Raqamlar ustunda tekis turishi uchun (pul, sana, hisoblagich). */
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Slayddagi kabi: sarlavhadagi bitta so'z kursiv serif bilan. */
+@utility accent {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+}

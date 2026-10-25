@@ -1,0 +1,256 @@
+/* OBRO' Panel — reja hujjati uslubi (brendbuk: Gold #FFB81C, Ink #141414, Ivory #F6F1E7) */
+:root {
+  --gold: #FFB81C;
+  --ink: #141414;
+  --graphite: #2E2E2E;
+  --ivory: #F6F1E7;
+  --bronze: #8A5E00;
+  --white: #FFFFFF;
+  --muted: #6B6760;
+  --line: #E4DCCB;
+  --line-soft: #EFE9DC;
+  --ok: #1F7A4D;
+  --warn: #B45309;
+  --bad: #C62828;
+  --info: #2457A6;
+}
+
+@page {
+  size: A4;
+  margin: 16mm 15mm 17mm 15mm;
+  @bottom-left {
+    content: "OBRO’ Panel · CRM va mijoz paneli rejasi · v1.0";
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7pt;
+    color: #8C877E;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7pt;
+    color: #8C877E;
+  }
+}
+@page cover { margin: 0; background: #141414; @bottom-left { content: none; } @bottom-right { content: none; } }
+
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 9.6pt;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--white);
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+b, strong { font-weight: 700; }
+
+/* ---------- Muqova ---------- */
+.cover {
+  page: cover;
+  width: 210mm; height: 296mm;
+  background: var(--ink);
+  color: var(--white);
+  position: relative;
+  overflow: hidden;
+  break-after: page;
+  padding: 22mm 20mm;
+}
+.cover .logo { width: 62mm; }
+.cover .ring {
+  position: absolute; right: -64mm; top: 16mm;
+  width: 150mm; opacity: 1;
+}
+.cover .kicker {
+  font-family: 'JetBrains Mono', monospace; font-size: 8.5pt; letter-spacing: .18em;
+  color: var(--gold); text-transform: uppercase; margin-top: 118mm;
+}
+.cover h1 {
+  font-family: 'Unbounded', sans-serif; font-weight: 700;
+  font-size: 36pt; line-height: 1.05; margin: 6mm 0 0;
+}
+.cover h1 span { display: block; color: var(--gold); font-size: 21pt; font-weight: 600; margin-top: 3mm; }
+.cover .sub { font-size: 12pt; color: #D8D2C4; max-width: 112mm; margin-top: 8mm; line-height: 1.5; }
+.cover .meta {
+  position: absolute; left: 20mm; right: 20mm; bottom: 20mm;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm;
+  border-top: 1px solid #3A3A3A; padding-top: 6mm;
+}
+.cover .meta div { font-size: 8.5pt; color: #CFC8B9; }
+.cover .meta b { display: block; font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 7pt; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.5mm; }
+
+/* ---------- Sarlavhalar ---------- */
+section { margin-top: 9mm; padding-top: 6mm; border-top: 1px solid var(--line); }
+section.first { margin-top: 0; padding-top: 0; border-top: 0; }
+section.newpage { break-before: page; margin-top: 0; padding-top: 0; border-top: 0; }
+.eyebrow, h2, .lead { break-after: avoid; }
+table.keep { break-inside: avoid; }
+td.t, th.t { text-align: center; }
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace; font-size: 7.5pt; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--bronze); margin: 0 0 2mm;
+  display: flex; align-items: center; gap: 2.2mm;
+}
+.eyebrow::before { content: ""; width: 2.2mm; height: 2.2mm; border-radius: 50%; background: var(--gold); display: inline-block; }
+h2 {
+  font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 19pt; line-height: 1.15;
+  margin: 0 0 4mm; letter-spacing: -.01em;
+}
+h3 {
+  font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 11pt;
+  margin: 6mm 0 2.5mm; break-after: avoid;
+}
+h4 { font-size: 9.8pt; font-weight: 800; margin: 4mm 0 1.5mm; break-after: avoid; }
+p { margin: 0 0 2.6mm; }
+.lead { font-size: 10.8pt; line-height: 1.55; color: var(--graphite); max-width: 165mm; }
+.small { font-size: 8.2pt; color: var(--muted); }
+ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+li { margin-bottom: 1.2mm; }
+ul.dot { list-style: none; padding-left: 0; }
+ul.dot li { position: relative; padding-left: 5mm; }
+ul.dot li::before { content: ""; position: absolute; left: .6mm; top: 2.1mm; width: 1.8mm; height: 1.8mm; border-radius: 50%; background: var(--gold); }
+
+/* ---------- Bloklar ---------- */
+.box { background: var(--ivory); border-radius: 3mm; padding: 4mm 5mm; margin: 3mm 0 4mm; break-inside: avoid; }
+.box.ink { background: var(--ink); color: var(--white); }
+.box.ink .small { color: #BDB6A8; }
+.box.gold { background: var(--gold); }
+.box.line { background: var(--white); border: 1px solid var(--line); }
+.box h4:first-child, .box h3:first-child { margin-top: 0; }
+.note { border-left: 1.2mm solid var(--gold); background: #FFF8E6; padding: 3mm 4mm; margin: 3mm 0 4mm; border-radius: 0 2mm 2mm 0; break-inside: avoid; }
+.note.red { border-left-color: var(--bad); background: #FCEDEC; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3.5mm; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+.card { border: 1px solid var(--line); border-radius: 3mm; padding: 3.5mm 4mm; break-inside: avoid; background: var(--white); }
+.card .k { font-family: 'JetBrains Mono', monospace; font-size: 7pt; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.card .v { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 15pt; margin: 1mm 0; }
+.cut { clip-path: polygon(0 0, calc(100% - 5mm) 0, 100% 5mm, 100% 100%, 0 100%); }
+
+.tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 6.8pt; font-weight: 700; letter-spacing: .06em; padding: .5mm 1.8mm; border-radius: 1.2mm; vertical-align: middle; white-space: nowrap; }
+.tag.mvp { background: var(--ink); color: var(--gold); }
+.tag.b2 { background: #E9E1CF; color: var(--graphite); }
+.tag.b3 { background: transparent; color: var(--muted); border: 1px solid #CFC6B3; }
+.tag.ok { background: #E3F1E9; color: var(--ok); }
+.tag.warn { background: #FBEBDD; color: var(--warn); }
+.tag.bad { background: #FBE4E2; color: var(--bad); }
+.tag.info { background: #E4ECF8; color: var(--info); }
+.tag.draft { background: #EEECE8; color: var(--muted); }
+
+/* ---------- Jadvallar ---------- */
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 8.6pt; break-inside: auto; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th {
+  text-align: left; font-weight: 700; font-size: 7.6pt; letter-spacing: .02em;
+  background: var(--ink); color: var(--white); padding: 2mm 2.4mm; vertical-align: bottom;
+}
+th:first-child { border-top-left-radius: 1.6mm; }
+th:last-child { border-top-right-radius: 1.6mm; }
+td { padding: 1.8mm 2.4mm; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+tbody tr:nth-child(even) td { background: #FBF8F2; }
+td.num, th.num { text-align: right; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+td.c, th.c { text-align: center; }
+td.mono { font-size: 8pt; }
+table.matrix td.c { font-size: 10pt; line-height: 1; padding-top: 2.2mm; }
+table.matrix td:first-child { font-weight: 600; }
+table.compact td, table.compact th { padding: 1.4mm 2mm; }
+tr.total td { font-weight: 800; background: var(--ivory) !important; border-top: 1.5px solid var(--ink); }
+.hl { background: #FFF3D1 !important; }
+
+/* ---------- Modul kartalari ---------- */
+.module { border: 1px solid var(--line); border-radius: 3mm; padding: 4mm 5mm 3mm; margin: 0 0 4mm; break-inside: avoid; position: relative; }
+.module .head { display: flex; align-items: baseline; gap: 3mm; margin-bottom: 2mm; }
+.module .no { font-family: 'JetBrains Mono', monospace; font-size: 8pt; color: var(--bronze); }
+.module .title { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 11pt; flex: 1; }
+.module dl { display: grid; grid-template-columns: 30mm 1fr; gap: 1.2mm 4mm; margin: 0; }
+.module dt { font-weight: 700; color: var(--graphite); font-size: 8.4pt; }
+.module dd { margin: 0; font-size: 8.8pt; }
+
+/* ---------- Oqim (pipeline) ---------- */
+.pipe { display: flex; flex-wrap: wrap; gap: 1.6mm; align-items: stretch; margin: 3mm 0 4mm; break-inside: avoid; }
+.pipe .st { flex: 1 1 0; min-width: 21mm; background: var(--ivory); border-radius: 2mm; padding: 2.4mm 2.4mm 2mm; font-size: 7.8pt; line-height: 1.35; position: relative; }
+.pipe .st b { display: block; font-size: 8.4pt; margin-bottom: .8mm; }
+.pipe .st .who { font-family: 'JetBrains Mono', monospace; font-size: 6.6pt; color: var(--bronze); text-transform: uppercase; letter-spacing: .06em; }
+.pipe .st.client { background: var(--gold); }
+.pipe .st.client .who { color: var(--ink); }
+.pipe .st.done { background: var(--ink); color: var(--white); }
+.pipe .st.done .who { color: var(--gold); }
+
+/* ---------- Kod / daraxt ---------- */
+pre.tree {
+  font-family: 'JetBrains Mono', monospace; font-size: 7.4pt; line-height: 1.5;
+  background: var(--ink); color: #EDE7DA; border-radius: 3mm; padding: 4mm 5mm; margin: 2mm 0 4mm;
+  white-space: pre; break-inside: avoid; overflow: hidden;
+}
+pre.tree .c { color: #8F887A; }
+pre.tree .g { color: var(--gold); }
+
+/* ---------- Rang namunalari ---------- */
+.sw { border-radius: 3mm; overflow: hidden; border: 1px solid var(--line); break-inside: avoid; }
+.sw .chip { height: 20mm; padding: 2.5mm 3mm; display: flex; align-items: flex-end; font-weight: 800; font-size: 9pt; }
+.sw .meta { padding: 2.2mm 3mm; font-size: 7.6pt; line-height: 1.45; }
+.sw .meta .mono { font-size: 7.4pt; }
+
+/* ---------- Muddatlar (gantt) ---------- */
+.gantt { width: 100%; border-collapse: collapse; font-size: 8pt; }
+.gantt td, .gantt th { padding: 1.4mm 1mm; border-bottom: 1px solid var(--line-soft); }
+.gantt th { background: none; color: var(--muted); font-weight: 600; font-size: 7pt; text-align: center; border-radius: 0 !important; padding-bottom: 1.5mm; }
+.gantt td.lab { width: 46mm; font-weight: 700; }
+.gantt td.cell { padding: 1.4mm .4mm; }
+.bar { height: 4.2mm; border-radius: 1.2mm; }
+.bar.p0 { background: #D9D1BF; }
+.bar.p1 { background: var(--ink); }
+.bar.pp { background: var(--gold); }
+.bar.p2 { background: #8A5E00; }
+.bar.p3 { background: #BFB49C; }
+
+/* ---------- Eskiz (mockup) ---------- */
+.mock { border: 1px solid #D6CDB9; border-radius: 3.5mm; overflow: hidden; display: grid; grid-template-columns: 38mm 1fr; font-size: 7.4pt; background: var(--ivory); break-inside: avoid; }
+.mock .side { background: var(--ink); color: #D8D2C4; padding: 4mm 3mm; min-height: 128mm; }
+.mock .side img { width: 24mm; margin-bottom: 6mm; }
+.mock .side .it { padding: 1.6mm 2mm; border-radius: 1.4mm; margin-bottom: .8mm; display: flex; align-items: center; gap: 1.8mm; }
+.mock .side .it.on { background: #262626; color: var(--white); font-weight: 700; }
+.mock .side .it .d { width: 1.6mm; height: 1.6mm; border-radius: 50%; background: transparent; }
+.mock .side .it.on .d { background: var(--gold); }
+.mock .side .it .cnt { margin-left: auto; background: var(--gold); color: var(--ink); font-weight: 800; border-radius: 1mm; padding: 0 1.2mm; font-size: 6.6pt; }
+.mock .main { padding: 4mm 4.5mm; }
+.mock .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3mm; }
+.mock .top .t { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 11pt; }
+.mock .pill { background: var(--white); border: 1px solid var(--line); border-radius: 5mm; padding: .8mm 2.6mm; font-size: 7pt; }
+.mock .row { display: grid; gap: 2.6mm; margin-bottom: 2.6mm; }
+.mock .tile { background: var(--white); border-radius: 2.4mm; padding: 2.8mm 3mm; border: 1px solid #ECE4D3; }
+.mock .tile .k { font-family: 'JetBrains Mono', monospace; font-size: 6.2pt; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 1mm; }
+.mock .tile .big { font-family: 'Unbounded', sans-serif; font-weight: 600; font-size: 12pt; }
+.mock .tile .big small { font-family: 'Manrope'; font-size: 7pt; font-weight: 600; color: var(--muted); }
+.mock .rings { display: flex; justify-content: space-around; }
+.mock .rings div { text-align: center; font-size: 6.8pt; color: var(--muted); }
+.mock .btn { display: inline-block; background: var(--gold); color: var(--ink); font-weight: 800; border-radius: 1.4mm; padding: .9mm 2.4mm; font-size: 6.8pt; }
+.mock .btn.ghost { background: transparent; border: 1px solid #CFC6B3; font-weight: 600; }
+.mock .thumb { height: 17mm; border-radius: 1.6mm; background: linear-gradient(135deg, #2E2E2E, #141414); position: relative; }
+.mock .thumb::after { content: "▶"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--gold); font-size: 9pt; }
+.mock .li { display: flex; gap: 2mm; padding: 1.2mm 0; border-bottom: 1px dashed #E6DECF; }
+.mock .li:last-child { border-bottom: 0; }
+.mock .li .tm { font-family: 'JetBrains Mono', monospace; color: var(--muted); width: 9mm; flex: none; }
+
+.toc { columns: 2; column-gap: 10mm; font-size: 9.2pt; }
+.toc div { display: flex; gap: 3mm; padding: 1.3mm 0; border-bottom: 1px solid var(--line-soft); break-inside: avoid; }
+.toc .n { font-family: 'JetBrains Mono', monospace; color: var(--bronze); width: 7mm; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 4mm 0; }
+.kpis .card .v { font-size: 13pt; }
+.decision { display: grid; grid-template-columns: 7mm 1fr; gap: 2mm; padding: 2.2mm 0; border-bottom: 1px solid var(--line-soft); break-inside: avoid; }
+.decision .i { width: 6mm; height: 6mm; border-radius: 50%; background: var(--ink); color: var(--gold); font-family: 'JetBrains Mono'; font-weight: 700; font-size: 7.4pt; display: flex; align-items: center; justify-content: center; }
+.q { display: grid; grid-template-columns: 8mm 1fr; gap: 2mm; padding: 2.4mm 0; border-bottom: 1px solid var(--line-soft); break-inside: avoid; }
+.q .n { font-family: 'JetBrains Mono'; font-weight: 700; color: var(--bronze); }
+.q .t { font-weight: 700; }
+.q .s { font-size: 8.4pt; color: var(--graphite); margin-top: .6mm; }
+.q .s b { color: var(--ok); }
+.fig { break-inside: avoid; margin: 3mm 0 4mm; }
+.fig .cap { font-size: 7.6pt; color: var(--muted); margin-top: 1.5mm; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.split .box { padding: 3.5mm 4.5mm; margin: 2mm 0 3mm; }
+.split li { font-size: 8.7pt; margin-bottom: .5mm; line-height: 1.4; }
+.yes h4 { color: var(--ok); }
+.no h4 { color: var(--bad); }

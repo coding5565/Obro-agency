@@ -1,0 +1,25 @@
+"""Bildirishnomalar. Telegram'ga yuborish keyingi bosqichda fon ishi sifatida qo'shiladi."""
+from apps.notifications.models import Notification
+
+
+def notify(users, kind, title, body="", link=""):
+    seen = set()
+    rows = []
+    for user in users:
+        if user is None or user.pk in seen or not user.is_active:
+            continue
+        seen.add(user.pk)
+        rows.append(Notification(user=user, kind=kind, title=title[:200], body=body, link=link))
+    Notification.objects.bulk_create(rows)
+    return rows
+
+
+def project_smm_managers(project):
+    from apps.accounts.models import Position
+
+    return [a.user for a in project.assignments.select_related("user").filter(position__code=Position.SMM_TARGET,
+                                                                                ended_at__isnull=True)]
+
+
+def project_client_users(project):
+    return [m.user for m in project.client.memberships.select_related("user")]
