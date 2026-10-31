@@ -97,6 +97,8 @@ class Adjustment(models.Model):
     month = models.PositiveSmallIntegerField()
     reason = models.CharField(max_length=255)
     project = models.ForeignKey("clients.Project", null=True, blank=True, on_delete=models.SET_NULL)
+    account = models.ForeignKey("finance.CashAccount", null=True, blank=True, on_delete=models.PROTECT,
+                                related_name="+", help_text="Avans qaysi hisobdan berildi")
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -114,6 +116,10 @@ class Payout(models.Model):
     amount_uzs = money_field()
     paid_on = models.DateField()
     method = models.CharField(max_length=10, choices=[("cash", "Naqd"), ("card", "Karta")], default="card")
+    account = models.ForeignKey("finance.CashAccount", null=True, blank=True, on_delete=models.PROTECT,
+                                related_name="+")
     note = models.CharField(max_length=255, blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancel_reason = models.CharField(max_length=255, blank=True)

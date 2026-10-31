@@ -26,7 +26,10 @@ def _jsonable(value):
 
 def log(actor, action, instance, *, before=None, after=None, comment=""):
     from apps.core.models import AuditLog
+    from common.activity import logged_in_request
 
+    # Batafsil yozuv bor: umumiy jurnal shu so'rovni ikkinchi marta yozmaydi.
+    logged_in_request.set(True)
     AuditLog.objects.create(
         actor=actor if getattr(actor, "is_authenticated", False) else None,
         action=action,

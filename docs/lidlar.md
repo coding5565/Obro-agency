@@ -70,3 +70,15 @@ chiqadi, Telegram ulangan bo‘lsa bot ham yuboradi. Bir xabar ikki marta bormay
 | Ish jurnali bo‘sh | Har kuni 18:30 dan | Jamoa |
 
 Javobsiz lid eslatmalari 22:00–08:00 oralig‘ida yuborilmaydi.
+
+## Moliya
+
+Moliya bo‘limi: hisob-fakturalar, to‘lovlar, xarajatlar, qarzdorlar, hisoblar, foyda va hisobot, sheriklar, kurs, sozlamalar.
+
+- **Sof foyda** = tushum − reklama budjeti − jamoa ulushi (bonus, dona ish va jarima bilan) − tasdiqlangan xarajatlar. Avans va sherik olgan pul foydani kamaytirmaydi, ular faqat kassadan chiqadi.
+- **Hisob qoldig‘i** yozuvlardan hisoblanadi: boshlang‘ich qoldiq + kirim − chiqim. Hisob qoldig‘i to‘g‘ri chiqishi uchun to‘lov va xarajatda hisobni tanlash kerak.
+
+## Harakatlar va Versiyalar
+
+- **Harakatlar** (`/app/activity`, rahbar va super admin): tizimga kirish va har bir o‘zgartirish yoziladi. So‘rov tanasi saqlanmaydi, shuning uchun parol jurnalga tushmaydi.
+- **Versiyalar** (`/app/versions`): har yangilanishda `frontend/src/shared/changelog.ts` ga yangi yozuv qo‘shiladi.

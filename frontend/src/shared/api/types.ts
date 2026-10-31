@@ -293,6 +293,7 @@ export interface Payment {
   amount_uzs: Money
   method: string
   method_label: string
+  account_name: string
   paid_on: string
   note: string
   allocations: { id: number; invoice: number; invoice_number: string; amount: Money }[]
@@ -313,13 +314,98 @@ export interface Expense {
   status: string
   status_label: string
   created_by_name: string | null
+  account_name: string
+  client_name: string
+  has_receipt: boolean
   cancelled_at: string | null
+  cancel_reason: string
 }
 
 export interface ExpenseCategory {
   id: number
   name: string
+  sort: number
 }
+
+export interface CashAccount {
+  id: number
+  name: string
+  kind: 'cash' | 'card' | 'bank'
+  kind_label: string
+  currency: Currency
+  opening_balance: Money
+  balance: Money
+  is_active: boolean
+}
+
+export interface AccountStatement {
+  opening: Money
+  closing: Money
+  items: { date: string; kind: string; label: string; amount: Money; balance: Money }[]
+}
+
+export interface AccountTransfer {
+  id: number
+  from_name: string
+  from_currency: Currency
+  to_name: string
+  to_currency: Currency
+  amount: Money
+  to_amount: Money
+  moved_on: string
+  note: string
+  cancelled_at: string | null
+}
+
+export interface Partner {
+  id: number
+  name: string
+  share_percent: Money
+  is_active: boolean
+}
+
+export interface PartnerWithdrawal {
+  id: number
+  partner_name: string
+  account_name: string
+  amount: Money
+  currency: Currency
+  taken_on: string
+  cancelled_at: string | null
+}
+
+export interface RecurringExpense {
+  id: number
+  category_name: string
+  description: string
+  amount: Money
+  currency: Currency
+  day_of_month: number
+  account_name: string
+  client_name: string
+  is_active: boolean
+}
+
+export interface MonthSummary {
+  month: string
+  transit_uzs: Money
+  own_income_uzs: Money
+  team_share_uzs: Money
+  team_adjustments_uzs: Money
+  expenses_uzs: Money
+  expenses_by_category: { category: string; amount_uzs: Money }[]
+  profit_uzs: Money
+  margin_percent: number | null
+  partners: { id: number; name: string; share_percent: Money; share_uzs: Money; taken_uzs: Money }[]
+  cash: { in_uzs: Money; payouts_uzs: Money; advances_uzs: Money; expenses_uzs: Money; withdrawals_uzs: Money; net_uzs: Money }
+  payroll_unpaid_uzs: Money
+  receivable: Record<string, Money>
+  is_closed: boolean
+}
+
+export interface TrendRow { month: string; income_uzs: Money; team_uzs: Money; expenses_uzs: Money; profit_uzs: Money }
+
+export interface ClientProfit { client: string; income_uzs: Money; team_uzs: Money; expenses_uzs: Money; profit_uzs: Money; margin_percent: number | null }
 
 export interface CompensationRule {
   id: number

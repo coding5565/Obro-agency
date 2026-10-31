@@ -94,6 +94,21 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   return data as T
 }
 
+// CSV va chek: token sarlavhada ketadi, shuning uchun oddiy havola emas, fetch orqali olinadi.
+export async function downloadFile(path: string, filename: string, params?: Params, retry = true): Promise<void> {
+  const headers: Record<string, string> = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+  const res = await fetch(`${BASE}${path}${buildQuery(params)}`, { headers, credentials: 'include' })
+  if (res.status === 401 && retry && await refreshSession()) return downloadFile(path, filename, params, false)
+  if (!res.ok) throw new ApiError(res.status, await res.text())
+  const disposition = res.headers.get('content-disposition')?.match(/filename="?([^"]+)"?/)?.[1]
+  const url = URL.createObjectURL(await res.blob())
+  const link = document.createElement('a')
+  link.href = url
+  link.download = disposition ?? filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export const get = <T>(path: string, params?: Params) => api<T>(path, { params })
 export const post = <T>(path: string, body?: unknown) => api<T>(path, { method: 'POST', body: body ?? {} })
 export const patch = <T>(path: string, body: unknown) => api<T>(path, { method: 'PATCH', body })

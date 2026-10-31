@@ -1,20 +1,23 @@
 from collections import defaultdict
 from decimal import Decimal
+from pathlib import Path
 
-from django.db.models import Sum
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework import serializers as drf_serializers
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.clients.models import Client, Project
+from apps.finance import cash, reports, services
 from apps.finance import serializers as s
-from apps.finance import services
 from apps.finance.models import (
+    AccountTransfer,
     CashAccount,
     ExchangeRate,
     Expense,
@@ -22,16 +25,27 @@ from apps.finance.models import (
     Invoice,
     InvoiceLine,
     MonthClose,
+    Partner,
+    PartnerWithdrawal,
     Payment,
+    RecurringExpense,
 )
 from apps.finance.rates import RateFetchError, store_cbu_rate
-from apps.payroll.models import Accrual
 from common import access, audit
+from common.csvutil import csv_response
 from common.dates import month_range, parse_month
 from common.money import q
 from common.permissions import ObroPermission
 
 MANAGE = {"read": access.FINANCE_MANAGE, "write": access.FINANCE_MANAGE}
+
+
+def _in_month(qs, field, request):
+    """?month=2026-11 berilsa, faqat shu oy yozuvlari."""
+    if request.query_params.get("month"):
+        start, end = month_range(*parse_month(request.query_params["month"]))
+        return qs.filter(**{f"{field}__range": (start, end)})
+    return qs
 
 
 class ExchangeRateViewSet(viewsets.ModelViewSet):
@@ -61,6 +75,73 @@ class CashAccountViewSet(viewsets.ModelViewSet):
     required_perms = MANAGE
     pagination_class = None
     http_method_names = ["get", "post", "patch", "head", "options"]
+
+    def perform_update(self, serializer):
+        before = audit.snapshot(serializer.instance)
+        account = serializer.save()
+        audit.log(self.request.user, "account.update", account, before=before, after=audit.snapshot(account))
+
+    @action(detail=True, methods=["get"])
+    def statement(self, request, pk=None):
+        year, month = parse_month(request.query_params.get("month"))
+        start, end = month_range(year, month)
+        return Response(cash.statement(self.get_object(), start, end))
+
+
+class AccountTransferViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    queryset = AccountTransfer.objects.select_related("from_account", "to_account")
+    serializer_class = s.AccountTransferSerializer
+    permission_classes = [ObroPermission]
+    required_perms = MANAGE
+
+    def perform_create(self, serializer):
+        v = serializer.validated_data
+        serializer.instance = cash.create_transfer(
+            by=self.request.user, from_account=v["from_account"], to_account=v["to_account"], amount=v["amount"],
+            to_amount=v.get("to_amount"), moved_on=v["moved_on"], note=v.get("note", ""),
+        )
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        transfer = cash.cancel_transfer(self.get_object(), by=request.user, reason=request.data.get("reason", ""))
+        return Response(self.get_serializer(transfer).data)
+
+
+class PartnerViewSet(viewsets.ModelViewSet):
+    queryset = Partner.objects.all()
+    serializer_class = s.PartnerSerializer
+    permission_classes = [ObroPermission]
+    required_perms = {"read": access.REPORTS_AGENCY, "write": access.REPORTS_AGENCY}
+    pagination_class = None
+    http_method_names = ["get", "post", "patch", "head", "options"]
+
+
+class PartnerWithdrawalViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+    queryset = PartnerWithdrawal.objects.select_related("partner", "account")
+    serializer_class = s.PartnerWithdrawalSerializer
+    permission_classes = [ObroPermission]
+    required_perms = {"read": access.REPORTS_AGENCY, "write": access.REPORTS_AGENCY}
+    filterset_fields = ["partner"]
+
+    def perform_create(self, serializer):
+        serializer.instance = cash.create_withdrawal(by=self.request.user, **serializer.validated_data)
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        withdrawal = cash.cancel_withdrawal(self.get_object(), by=request.user, reason=request.data.get("reason", ""))
+        return Response(self.get_serializer(withdrawal).data)
+
+
+class RecurringExpenseViewSet(viewsets.ModelViewSet):
+    queryset = RecurringExpense.objects.select_related("category", "account", "project__client")
+    serializer_class = s.RecurringExpenseSerializer
+    permission_classes = [ObroPermission]
+    required_perms = MANAGE
+    pagination_class = None
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
 
 class InvoiceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
@@ -103,6 +184,11 @@ class InvoiceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Up
         invoice = services.cancel_invoice(self.get_object(), by=request.user, reason=request.data.get("reason", ""))
         return Response(self.get_serializer(invoice).data)
 
+    @action(detail=True, methods=["post"])
+    def remind(self, request, pk=None):
+        rows = services.remind_invoice(self.get_object(), by=request.user)
+        return Response({"sent": len(rows)})
+
     @action(detail=True, methods=["post"], url_path="lines")
     def add_line(self, request, pk=None):
         invoice = self.get_object()
@@ -132,7 +218,8 @@ class PaymentViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
     search_fields = ["client__name", "note"]
 
     def get_queryset(self):
-        return Payment.objects.select_related("client", "received_by").prefetch_related("allocations__invoice")
+        qs = Payment.objects.select_related("client", "received_by", "account").prefetch_related("allocations__invoice")
+        return _in_month(qs, "paid_on", self.request)
 
     def create(self, request):
         data = s.PaymentCreateSerializer(data=request.data)
@@ -174,16 +261,25 @@ class ExpenseViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
                      viewsets.GenericViewSet):
     serializer_class = s.ExpenseSerializer
     permission_classes = [ObroPermission]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
     required_perms = {"read": access.EXPENSES_REQUEST, "create": access.EXPENSES_REQUEST,
-                      "write": access.FINANCE_MANAGE}
+                      "receipt": access.EXPENSES_REQUEST, "write": access.FINANCE_MANAGE}
     filterset_fields = ["category", "status", "project", "currency"]
     search_fields = ["description"]
 
     def get_queryset(self):
-        qs = Expense.objects.select_related("category", "created_by")
+        qs = Expense.objects.select_related("category", "created_by", "account", "project__client")
         if not self.request.user.has_obro_perm(access.FINANCE_MANAGE):
             qs = qs.filter(created_by=self.request.user)
-        return qs
+        return _in_month(qs, "spent_on", self.request)
+
+    @action(detail=True, methods=["get"])
+    def receipt(self, request, pk=None):
+        """Chek faqat shu xarajatni ko'ra oladigan odamga beriladi."""
+        expense = self.get_object()
+        if not expense.receipt:
+            raise ValidationError({"receipt": "Chek biriktirilmagan"})
+        return FileResponse(expense.receipt.open("rb"), as_attachment=True, filename=Path(expense.receipt.name).name)
 
     def perform_create(self, serializer):
         data = dict(serializer.validated_data)
@@ -248,44 +344,44 @@ class DebtsView(APIView):
 
 
 class MonthSummaryView(APIView):
-    """Agentlik oylik foydasi (so'mda): tushum − jamoa ulushi − xarajatlar."""
+    """Agentlik oylik foydasi (so'mda): tushum − jamoa ulushi − xarajatlar, hamda pul oqimi."""
 
     permission_classes = [ObroPermission]
     required_perms = {"read": access.REPORTS_AGENCY}
 
     def get(self, request):
         year, month = parse_month(request.query_params.get("month"))
-        start, end = month_range(year, month)
-        payments = Payment.objects.filter(paid_on__range=(start, end), cancelled_at__isnull=True)
-        income = payments.aggregate(s=Sum("amount_uzs"))["s"] or Decimal(0)
-        # Tranzit (reklama budjeti) daromad emas: to'lovning tranzit qismi ayiriladi.
-        transit = Decimal(0)
-        for payment in payments.prefetch_related("allocations__invoice"):
-            for alloc in payment.allocations.all():
-                inv = alloc.invoice
-                if inv.transit_total and inv.total:
-                    transit += alloc.amount * inv.transit_total / inv.total * payment.rate_to_uzs
-        team = (Accrual.objects.filter(accrued_on__range=(start, end)).exclude(status=Accrual.CANCELLED)
-                .aggregate(s=Sum("amount_uzs"))["s"] or Decimal(0))
-        expenses_qs = Expense.objects.filter(spent_on__range=(start, end), status=Expense.APPROVED,
-                                             cancelled_at__isnull=True)
-        expenses = expenses_qs.aggregate(s=Sum("amount_uzs"))["s"] or Decimal(0)
-        by_category = [{"category": row["category__name"], "amount_uzs": str(q(row["s"]))}
-                       for row in expenses_qs.values("category__name").annotate(s=Sum("amount_uzs")).order_by("-s")]
-        own_income = q(income - transit)
-        profit = q(own_income - team - expenses)
-        return Response({
-            "month": f"{year}-{month:02d}",
-            "income_uzs": str(q(income)),
-            "transit_uzs": str(q(transit)),
-            "own_income_uzs": str(own_income),
-            "team_share_uzs": str(q(team)),
-            "expenses_uzs": str(q(expenses)),
-            "expenses_by_category": by_category,
-            "profit_uzs": str(profit),
-            "per_partner_uzs": str(q(profit / 2)),
-            "is_closed": MonthClose.objects.filter(year=year, month=month).exists(),
-        })
+        return Response(reports.month_summary(year, month))
+
+
+class TrendView(APIView):
+    permission_classes = [ObroPermission]
+    required_perms = {"read": access.REPORTS_AGENCY}
+
+    def get(self, request):
+        year, month = parse_month(request.query_params.get("month"))
+        return Response(reports.trend(year, month))
+
+
+class ByClientView(APIView):
+    permission_classes = [ObroPermission]
+    required_perms = {"read": access.REPORTS_AGENCY}
+
+    def get(self, request):
+        year, month = parse_month(request.query_params.get("month"))
+        return Response(reports.by_client(year, month))
+
+
+class ExportView(APIView):
+    permission_classes = [ObroPermission]
+    required_perms = {"read": access.REPORTS_AGENCY}
+
+    def get(self, request, kind):
+        year, month = parse_month(request.query_params.get("month"))
+        data = reports.export_rows(kind, year, month)
+        if data is None:
+            raise ValidationError({"kind": "Bunday hisobot yo‘q"})
+        return csv_response(f"{kind}-{year}-{month:02d}.csv", *data)
 
 
 class CloseMonthView(APIView):
@@ -294,6 +390,15 @@ class CloseMonthView(APIView):
 
     def post(self, request):
         year, month = parse_month(request.data.get("month"))
+        if request.data.get("action") == "reopen":
+            # Yopilgan oyni ochish hisobotlarni o'zgartirishi mumkin, shuning uchun faqat super admin.
+            if request.user.role != access.SUPER_ADMIN:
+                raise PermissionDenied("Oyni faqat super admin qayta ochadi")
+            closed = MonthClose.objects.filter(year=year, month=month).first()
+            if closed:
+                audit.log(request.user, "month.reopen", closed, comment=f"{month:02d}.{year}")
+                closed.delete()
+            return Response({"month": f"{year}-{month:02d}", "closed": False})
         close, created = MonthClose.objects.get_or_create(year=year, month=month, defaults={"closed_by": request.user})
         if created:
             audit.log(request.user, "month.close", close, comment=f"{month:02d}.{year}")

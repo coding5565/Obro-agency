@@ -1,7 +1,9 @@
-import { BadgeDollarSign, CalendarDays, Camera, ClipboardList, FileText, Gauge, LayoutDashboard, Magnet, NotebookPen, Package, Users, UsersRound, Wallet } from 'lucide-react'
+import { Activity, BadgeDollarSign, CalendarDays, Camera, ClipboardList, FileText, Gauge, History, LayoutDashboard, Magnet, NotebookPen, Package, Users, UsersRound, Wallet } from 'lucide-react'
+import { useLocation } from 'react-router'
 import { Shell } from './Shell'
 import type { NavItem } from './Shell'
 import { useAuth } from '../shared/auth/AuthProvider'
+import { hasUnseenRelease } from '../shared/changelog'
 
 const ITEMS: (NavItem & { perm?: string })[] = [
   { to: '/app', label: 'Bosh sahifa', icon: <LayoutDashboard size={17} />, end: true },
@@ -18,10 +20,15 @@ const ITEMS: (NavItem & { perm?: string })[] = [
   { to: '/app/me', label: 'Mening hisobim', icon: <BadgeDollarSign size={17} />, perm: 'payroll.view_own' },
   { to: '/app/tariffs', label: 'Tariflar', icon: <Package size={17} />, perm: 'catalog.view' },
   { to: '/app/team', label: 'Jamoa', icon: <Users size={17} />, perm: 'users.view' },
+  { to: '/app/activity', label: 'Harakatlar', icon: <Activity size={17} />, perm: 'audit.view' },
+  { to: '/app/versions', label: 'Versiyalar', icon: <History size={17} /> },
 ]
 
 export function StaffLayout() {
   const { can } = useAuth()
+  const location = useLocation()
+  const unseen = location.pathname !== '/app/versions' && hasUnseenRelease()
   const nav = ITEMS.filter((item) => !item.perm || can(item.perm))
+    .map((item) => (item.to === '/app/versions' && unseen ? { ...item, badge: 1 } : item))
   return <Shell nav={nav} />
 }

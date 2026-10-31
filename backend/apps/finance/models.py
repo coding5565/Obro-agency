@@ -46,6 +46,7 @@ class CashAccount(models.Model):
     name = models.CharField(max_length=80)
     kind = models.CharField(max_length=5, choices=KIND_CHOICES, default="cash")
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=UZS)
+    opening_balance = money_field(default=0, help_text="Tizim boshlangandagi qoldiq")
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -216,3 +217,74 @@ class MonthClose(models.Model):
     @classmethod
     def is_closed(cls, day):
         return cls.objects.filter(year=day.year, month=day.month).exists()
+
+
+class AccountTransfer(models.Model):
+    """Hisoblar orasida pul o'tkazish (masalan, kartadan kassaga, dollarni so'mga almashtirish)."""
+
+    from_account = models.ForeignKey(CashAccount, on_delete=models.PROTECT, related_name="transfers_out")
+    to_account = models.ForeignKey(CashAccount, on_delete=models.PROTECT, related_name="transfers_in")
+    amount = money_field(help_text="Chiqqan summa, birinchi hisob valyutasida")
+    to_amount = money_field(help_text="Tushgan summa, ikkinchi hisob valyutasida")
+    moved_on = models.DateField()
+    note = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancel_reason = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-moved_on", "-id"]
+
+
+class Partner(models.Model):
+    """Agentlik sherigi va uning sof foydadagi ulushi."""
+
+    name = models.CharField(max_length=120)
+    share_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["-share_percent", "name"]
+
+    def __str__(self):
+        return self.name
+
+
+class PartnerWithdrawal(models.Model):
+    """Sherik olgan pul. Xarajat emas: sof foydaga ta'sir qilmaydi, faqat kassadan chiqadi."""
+
+    partner = models.ForeignKey(Partner, on_delete=models.PROTECT, related_name="withdrawals")
+    amount = money_field()
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=UZS)
+    rate_to_uzs = rate_field(default=1)
+    amount_uzs = money_field()
+    taken_on = models.DateField()
+    account = models.ForeignKey(CashAccount, null=True, blank=True, on_delete=models.PROTECT)
+    note = models.CharField(max_length=255, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancel_reason = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-taken_on", "-id"]
+
+
+class RecurringExpense(models.Model):
+    """Har oy takrorlanadigan xarajat (ijara, servis). Belgilangan kuni o'zi yoziladi."""
+
+    category = models.ForeignKey(ExpenseCategory, on_delete=models.PROTECT)
+    description = models.CharField(max_length=255)
+    amount = money_field()
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=UZS)
+    day_of_month = models.PositiveSmallIntegerField(default=1, help_text="1 dan 28 gacha")
+    account = models.ForeignKey(CashAccount, null=True, blank=True, on_delete=models.PROTECT)
+    project = models.ForeignKey("clients.Project", null=True, blank=True, on_delete=models.PROTECT, related_name="+")
+    is_active = models.BooleanField(default=True)
+    last_month = models.CharField(max_length=7, blank=True, help_text="Oxirgi yozilgan oy: 2026-11")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["day_of_month", "description"]

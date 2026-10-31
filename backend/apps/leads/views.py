@@ -22,19 +22,12 @@ from apps.leads import services
 from apps.leads.serializers import LeadDetailSerializer, LeadSerializer, LeadSourceSerializer
 from common import access
 from common.calc.leads import is_ping
+from common.csvutil import csv_safe
 from common.permissions import ObroPermission
 
 CSV_COLUMNS = [("created_at", "Sana"), ("client", "Mijoz"), ("full_name", "Ism"), ("phone", "Telefon"),
                ("email", "Email"), ("city", "Shahar"), ("form_name", "Forma"), ("campaign_name", "Kampaniya"),
                ("source_label", "Manba"), ("status", "Holat"), ("assigned", "Mas’ul"), ("message", "Izoh")]
-
-
-def csv_safe(value):
-    """Excel «=», «+», «-», «@» bilan boshlangan katakni formula deb ishga tushiradi; lid matni tashqaridan keladi."""
-    text = "" if value is None else str(value)
-    if text[:1] in ("=", "+", "-", "@", "\t", "\r"):
-        return "'" + text
-    return text
 
 
 def parse_when(raw):

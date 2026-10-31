@@ -54,6 +54,7 @@ class LoginView(APIView):
             return Response({"detail": "Telefon yoki parol noto‘g‘ri"}, status=status.HTTP_401_UNAUTHORIZED)
         user.last_login = timezone.now()
         user.save(update_fields=["last_login"])
+        audit.log(user, "auth.login", user)
         return _token_response(user)
 
 

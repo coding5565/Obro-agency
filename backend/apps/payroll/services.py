@@ -66,7 +66,8 @@ def sheet_rows(year, month):
     for adj in Adjustment.objects.filter(year=year, month=month).select_related("user"):
         rows[adj.user_id]["adjustments"] += adj.signed_amount
         names[adj.user_id] = adj.user.full_name
-    for payout in Payout.objects.filter(sheet__year=year, sheet__month=month).select_related("user"):
+    payouts = Payout.objects.filter(sheet__year=year, sheet__month=month, cancelled_at__isnull=True)
+    for payout in payouts.select_related("user"):
         rows[payout.user_id]["paid"] += payout.amount_uzs
         names[payout.user_id] = payout.user.full_name
     result = []
@@ -107,11 +108,20 @@ def approve_sheet(sheet, *, by):
 
 
 @transaction.atomic
-def record_payout(sheet, *, by, user, amount_uzs, paid_on, method="card", note=""):
+def record_payout(sheet, *, by, user, amount_uzs, paid_on, method="card", note="", account=None):
     if sheet.status == PayrollSheet.DRAFT:
         raise ValidationError({"status": "Avval vedomostni tasdiqlang"})
-    payout = Payout.objects.create(sheet=sheet, user=user, amount_uzs=q(amount_uzs), paid_on=paid_on,
-                                   method=method, note=note, created_by=by)
+    amount = q(amount_uzs)
+    if amount <= 0:
+        raise ValidationError({"amount_uzs": "Summa musbat bo‘lishi kerak"})
+    if account is not None and account.currency != "UZS":
+        raise ValidationError({"account": "Maosh so‘mda: so‘mli hisobni tanlang"})
+    current = {row["user_id"]: row for row in sheet_rows(sheet.year, sheet.month)}.get(user.id)
+    if current is None or amount > current["remaining_uzs"]:
+        left = current["remaining_uzs"] if current else 0
+        raise ValidationError({"amount_uzs": f"Qoldiqdan ko‘p to‘lab bo‘lmaydi (qoldiq: {left} so‘m)"})
+    payout = Payout.objects.create(sheet=sheet, user=user, amount_uzs=amount, paid_on=paid_on,
+                                   method=method, note=note, account=account, created_by=by)
     rows = {row["user_id"]: row for row in sheet_rows(sheet.year, sheet.month)}
     if user.id in rows and rows[user.id]["remaining_uzs"] <= 0:
         sheet.accruals.filter(user=user).update(status=Accrual.PAID)
@@ -119,6 +129,25 @@ def record_payout(sheet, *, by, user, amount_uzs, paid_on, method="card", note="
         sheet.status = PayrollSheet.PAID
         sheet.save(update_fields=["status"])
     audit.log(by, "payroll.payout", payout, after=audit.snapshot(payout))
+    return payout
+
+
+@transaction.atomic
+def cancel_payout(payout, *, by, reason):
+    """Xato yozilgan maosh to'lovi: o'chirilmaydi, sabab bilan bekor qilinadi va qoldiq qaytadi."""
+    if not (reason or "").strip():
+        raise ValidationError({"reason": "Bekor qilish sababini yozing"})
+    if payout.cancelled_at:
+        raise ValidationError({"status": "Bu to‘lov allaqachon bekor qilingan"})
+    payout.cancelled_at = timezone.now()
+    payout.cancel_reason = reason.strip()[:255]
+    payout.save(update_fields=["cancelled_at", "cancel_reason"])
+    sheet = payout.sheet
+    sheet.accruals.filter(user=payout.user, status=Accrual.PAID).update(status=Accrual.APPROVED)
+    if sheet.status == PayrollSheet.PAID:
+        sheet.status = PayrollSheet.APPROVED
+        sheet.save(update_fields=["status"])
+    audit.log(by, "payroll.payout_cancel", payout, comment=payout.cancel_reason)
     return payout
 
 

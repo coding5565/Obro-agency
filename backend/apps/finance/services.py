@@ -27,6 +27,11 @@ def resolve_rate(currency, day, given=None):
     return rate
 
 
+def _require_account_currency(account, currency):
+    if account is not None and account.currency != currency:
+        raise ValidationError({"account": f"«{account.name}» hisobi {account.currency} da, summa esa {currency} da"})
+
+
 def ensure_month_open(day, user):
     if MonthClose.is_closed(day) and user.role not in access.MANAGEMENT_ROLES:
         raise ValidationError({"date": "Bu oy yopilgan. O‘zgartirishni faqat rahbar qila oladi."})
@@ -131,6 +136,7 @@ def record_payment(*, client, amount, currency, paid_on, by, project=None, invoi
     if amount <= 0:
         raise ValidationError({"amount": "Summa musbat bo‘lishi kerak"})
     ensure_month_open(paid_on, by)
+    _require_account_currency(account, currency)
     if invoice is not None:
         if invoice.project.client_id != client.id:
             raise ValidationError({"invoice": "Hisob-faktura boshqa mijozga tegishli"})
@@ -201,6 +207,7 @@ def cancel_payment(payment, *, by, reason):
 @transaction.atomic
 def create_expense(*, by, amount, currency, spent_on, rate_to_uzs=None, **fields):
     ensure_month_open(spent_on, by)
+    _require_account_currency(fields.get("account"), currency)
     rate = resolve_rate(currency, spent_on, rate_to_uzs)
     status = Expense.APPROVED if by.has_obro_perm(access.FINANCE_MANAGE) else Expense.REQUESTED
     expense = Expense.objects.create(
@@ -213,7 +220,7 @@ def create_expense(*, by, amount, currency, spent_on, rate_to_uzs=None, **fields
 
 @transaction.atomic
 def review_expense(expense, *, by, approve: bool):
-    if expense.status != Expense.REQUESTED:
+    if expense.status != Expense.REQUESTED or expense.cancelled_at:
         raise ValidationError({"status": "Bu so‘rov allaqachon ko‘rib chiqilgan"})
     expense.status = Expense.APPROVED if approve else Expense.REJECTED
     expense.save(update_fields=["status"])
@@ -225,6 +232,8 @@ def review_expense(expense, *, by, approve: bool):
 def cancel_expense(expense, *, by, reason):
     if not reason.strip():
         raise ValidationError({"reason": "Bekor qilish sababini yozing"})
+    if expense.cancelled_at:
+        raise ValidationError({"status": "Xarajat allaqachon bekor qilingan"})
     ensure_month_open(expense.spent_on, by)
     before = audit.snapshot(expense)
     expense.cancelled_at = timezone.now()
@@ -232,3 +241,16 @@ def cancel_expense(expense, *, by, reason):
     expense.save(update_fields=["cancelled_at", "cancel_reason"])
     audit.log(by, "expense.cancel", expense, before=before, comment=reason)
     return expense
+
+
+def remind_invoice(invoice, *, by):
+    """Mijozga to'lov eslatmasi. Bir hisob-faktura uchun kuniga bir marta."""
+    if not invoice.issued_at or invoice.cancelled_at or invoice.outstanding <= 0:
+        raise ValidationError({"status": "Bu hisob-faktura bo‘yicha qarz yo‘q"})
+    project = invoice.project
+    payers = [m.user for m in project.client.memberships.select_related("user") if m.can_see_payments]
+    rows = notify(payers, "invoice.reminder", f"To‘lov eslatmasi: {invoice.number}",
+                  body=f"Qoldiq: {invoice.outstanding} {invoice.currency}, muddat {invoice.due_date:%d.%m.%Y}",
+                  link="/portal/invoices", dedupe_key=f"invremind:{invoice.pk}:{timezone.localdate():%Y%m%d}")
+    audit.log(by, "invoice.remind", invoice, comment=f"{len(rows)} ta qabul qiluvchi")
+    return rows

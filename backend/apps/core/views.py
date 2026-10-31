@@ -1,12 +1,14 @@
 from collections import Counter
 from datetime import timedelta
 
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 from rest_framework import serializers, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.models import User
 from apps.clients.models import Client, Project
 from apps.clients.selectors import visible_projects
 from apps.content import models as cm
@@ -19,25 +21,94 @@ from apps.leads.services import counted
 from apps.tasks import models as tm
 from apps.worklog import models as wl
 from common import access
+from common.activity import SECTIONS, section_of
 from common.money import q
 from common.permissions import ObroPermission
+
+ACTION_LABELS = {
+    "auth.login": "Tizimga kirdi",
+    "client.create": "Yangi mijoz qo‘shdi", "project.create": "Yangi loyiha ochdi",
+    "project.update": "Loyihani o‘zgartirdi",
+    "assignment.create": "Xodimni loyihaga biriktirdi", "assignment.update": "Biriktirishni o‘zgartirdi",
+    "invoice.create": "Hisob-faktura yaratdi", "invoice.issue": "Hisob-faktura chiqardi",
+    "invoice.cancel": "Hisob-fakturani bekor qildi", "invoice.remind": "Mijozga to‘lov eslatmasi yubordi",
+    "payment.create": "To‘lov qayd etdi", "payment.cancel": "To‘lovni bekor qildi",
+    "payment.allocate_advance": "Avansni hisob-fakturaga o‘tkazdi",
+    "expense.create": "Xarajat kiritdi", "expense.review": "Xarajat so‘rovini ko‘rib chiqdi",
+    "expense.cancel": "Xarajatni bekor qildi", "account.update": "Hisobni o‘zgartirdi",
+    "transfer.create": "Hisoblar orasida pul o‘tkazdi", "transfer.cancel": "O‘tkazmani bekor qildi",
+    "withdrawal.create": "Sherik puli olinganini yozdi", "withdrawal.cancel": "Sherik pulini bekor qildi",
+    "month.close": "Oyni yopdi", "month.reopen": "Oyni qayta ochdi",
+    "payroll.approve": "Vedomostni tasdiqladi", "payroll.payout": "Maosh to‘ladi",
+    "payroll.payout_cancel": "Maosh to‘lovini bekor qildi", "payroll_adjustment.create": "Avans yoki bonus kiritdi",
+    "payroll_adjustment.delete": "Tuzatishni o‘chirdi", "payroll_rule.create": "Foiz qoidasi qo‘shdi",
+    "user.update": "Xodimni o‘zgartirdi", "user.activate": "Xodimni faollashtirdi",
+    "user.deactivate": "Xodimni o‘chirdi", "invite.create": "Taklif yaratdi",
+    "tariff_version.create": "Tarif versiyasi qo‘shdi", "tariff_version.update": "Tarif versiyasini o‘zgartirdi",
+}
 
 
 class AuditLogSerializer(serializers.ModelSerializer):
     actor_name = serializers.CharField(source="actor.full_name", read_only=True, default=None)
+    label = serializers.SerializerMethodField()
+    detail = serializers.SerializerMethodField()
+    section = serializers.SerializerMethodField()
 
     class Meta:
         model = AuditLog
-        fields = ["id", "actor", "actor_name", "action", "entity_type", "entity_id", "before", "after", "comment",
-                  "created_at"]
+        fields = ["id", "actor", "actor_name", "action", "label", "detail", "section", "entity_type", "entity_id",
+                  "before", "after", "comment", "created_at"]
+
+    def get_label(self, entry):
+        if entry.action.startswith("api."):
+            return entry.comment
+        return ACTION_LABELS.get(entry.action, entry.action)
+
+    def get_detail(self, entry):
+        if entry.action.startswith("api."):
+            return ""
+        after = entry.after or {}
+        parts = [entry.comment]
+        amount = after.get("amount") or after.get("amount_uzs")
+        if amount:
+            parts.append(f"{amount} {after.get('currency', 'UZS')}")
+        if after.get("description"):
+            parts.append(str(after["description"]))
+        return " · ".join(part for part in parts if part)
+
+    def get_section(self, entry):
+        return section_of(entry.entity_type)[1]
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AuditLog.objects.select_related("actor")
     serializer_class = AuditLogSerializer
     permission_classes = [ObroPermission]
     required_perms = {"read": access.AUDIT_VIEW}
     filterset_fields = ["action", "entity_type", "entity_id", "actor"]
+    search_fields = ["comment", "actor__full_name"]
+
+    def get_queryset(self):
+        qs = AuditLog.objects.select_related("actor")
+        params = self.request.query_params
+        section = SECTIONS.get(params.get("section", ""))
+        if section:
+            match = Q()
+            for prefix in section[1]:
+                match |= Q(entity_type__startswith=prefix)
+            qs = qs.filter(match)
+        if params.get("from"):
+            qs = qs.filter(created_at__date__gte=params["from"])
+        if params.get("to"):
+            qs = qs.filter(created_at__date__lte=params["to"])
+        return qs
+
+    @action(detail=False, methods=["get"])
+    def filters(self, request):
+        """Filtr uchun: bo'limlar va jurnalda uchragan odamlar."""
+        ids = AuditLog.objects.exclude(actor=None).values_list("actor", flat=True).distinct()
+        people = User.objects.filter(pk__in=ids).order_by("full_name")
+        return Response({"sections": [{"key": key, "label": value[0]} for key, value in SECTIONS.items()],
+                         "actors": [{"id": u.id, "name": u.full_name} for u in people]})
 
 
 def _alerts(user, projects, today):

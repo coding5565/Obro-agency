@@ -15,6 +15,7 @@ import { PortalRequest } from './pages/portal/Request'
 import { PortalResults } from './pages/portal/Results'
 import { PortalShoots } from './pages/portal/Shoots'
 import { PortalWorklog } from './pages/portal/Worklog'
+import { ActivityPage } from './pages/team/Activity'
 import { BriefDetailPage, BriefsPage } from './pages/team/Briefs'
 import { ClientDetailPage } from './pages/team/ClientDetail'
 import { ClientsPage } from './pages/team/Clients'
@@ -30,6 +31,7 @@ import { SchedulePage } from './pages/team/Schedule'
 import { TariffsPage } from './pages/team/Tariffs'
 import { TasksPage } from './pages/team/Tasks'
 import { TeamPage } from './pages/team/Team'
+import { VersionsPage } from './pages/team/Versions'
 import { WorklogPage } from './pages/team/Worklog'
 import { LoginPage } from './pages/Login'
 import { useAuth } from './shared/auth/AuthProvider'
@@ -78,6 +80,8 @@ export default function PanelRoutes() {
           <Route path="me" element={<Need perm="payroll.view_own"><MyPayrollPage /></Need>} />
           <Route path="tariffs" element={<Need perm="catalog.view"><TariffsPage /></Need>} />
           <Route path="team" element={<Need perm="users.view"><TeamPage /></Need>} />
+          <Route path="activity" element={<Need perm="audit.view"><ActivityPage /></Need>} />
+          <Route path="versions" element={<VersionsPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>

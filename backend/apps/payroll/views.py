@@ -1,11 +1,13 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers, status, viewsets
+from rest_framework import mixins, serializers, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.models import User
+from apps.finance.models import CashAccount
 from apps.payroll import services
-from apps.payroll.models import Accrual, Adjustment, CompensationRule, PayrollSheet
+from apps.payroll.models import Accrual, Adjustment, CompensationRule, Payout, PayrollSheet
 from common import access, audit
 from common.dates import parse_month
 from common.permissions import ObroPermission
@@ -56,7 +58,26 @@ class AdjustmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Adjustment
         fields = ["id", "user", "user_name", "kind", "kind_label", "amount_uzs", "year", "month", "reason",
-                  "project", "created_at"]
+                  "project", "account", "created_at"]
+
+    def validate(self, attrs):
+        account = attrs.get("account")
+        if account is not None and account.currency != "UZS":
+            raise serializers.ValidationError({"account": "Summa so‘mda: so‘mli hisobni tanlang"})
+        if account is not None and attrs.get("kind") != "advance":
+            attrs["account"] = None  # Hisobdan pul faqat avansda chiqadi.
+        return attrs
+
+
+class PayoutSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source="user.full_name", read_only=True)
+    account_name = serializers.CharField(source="account.name", read_only=True, default="")
+    method_label = serializers.CharField(source="get_method_display", read_only=True)
+
+    class Meta:
+        model = Payout
+        fields = ["id", "user", "user_name", "amount_uzs", "paid_on", "method", "method_label", "account",
+                  "account_name", "note", "cancelled_at", "cancel_reason"]
 
 
 class CompensationRuleViewSet(viewsets.ModelViewSet):
@@ -112,6 +133,27 @@ class AdjustmentViewSet(viewsets.ModelViewSet):
         instance.delete()
 
 
+class PayoutViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """To'langan maoshlar tarixi. Yangi to'lov vedomost orqali qayd etiladi."""
+
+    serializer_class = PayoutSerializer
+    permission_classes = [ObroPermission]
+    required_perms = MANAGE
+    filterset_fields = ["user"]
+
+    def get_queryset(self):
+        qs = Payout.objects.select_related("user", "account").order_by("-paid_on", "-id")
+        if self.request.query_params.get("month"):
+            year, month = parse_month(self.request.query_params["month"])
+            qs = qs.filter(sheet__year=year, sheet__month=month)
+        return qs
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        payout = services.cancel_payout(self.get_object(), by=request.user, reason=request.data.get("reason", ""))
+        return Response(self.get_serializer(payout).data)
+
+
 def _sheet_payload(sheet):
     return {
         "year": sheet.year,
@@ -142,9 +184,12 @@ class PayrollSheetView(APIView):
             services.approve_sheet(sheet, by=request.user)
         elif action_name == "payout":
             user = get_object_or_404(User, pk=request.data.get("user"))
+            account_id = request.data.get("account")
+            account = get_object_or_404(CashAccount, pk=account_id) if account_id else None
             services.record_payout(sheet, by=request.user, user=user, amount_uzs=request.data.get("amount_uzs"),
                                    paid_on=serializers.DateField().to_internal_value(request.data.get("paid_on")),
-                                   method=request.data.get("method", "card"), note=request.data.get("note", ""))
+                                   method=request.data.get("method", "card"), note=request.data.get("note", ""),
+                                   account=account)
         else:
             return Response({"action": "approve yoki payout"}, status=status.HTTP_400_BAD_REQUEST)
         sheet.refresh_from_db()

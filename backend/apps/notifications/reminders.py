@@ -12,11 +12,14 @@ from apps.accounts.models import User
 from apps.clients.models import Project
 from apps.content.models import Brief, ShootDay
 from apps.content.shoots import start_of, when_text
-from apps.finance.models import ExchangeRate
+from apps.finance.cash import run_recurring
+from apps.finance.models import ExchangeRate, Invoice
 from apps.finance.rates import RateFetchError, store_cbu_rate
 from apps.leads import models as lm
 from apps.leads.services import counted, lead_text
 from apps.notifications.services import notify, project_client_users, project_smm_managers
+from apps.payroll.models import PayrollSheet
+from apps.payroll.services import sheet_rows
 from apps.telegram.services import evening_reminders, morning_digest
 from common import access
 
@@ -148,6 +151,42 @@ def rate_missing(now):
                dedupe_key=f"ratemissing:{today:%Y%m%d}")
 
 
+def invoices(now):
+    """To'lov muddati: 3 kun oldin mijozga; o'tib ketsa mijoz va rahbarga, keyin haftada bir rahbarga."""
+    today = timezone.localtime(now).date()
+    open_invoices = (Invoice.objects.filter(issued_at__isnull=False, cancelled_at__isnull=True,
+                                            due_date__lte=today + timedelta(days=3))
+                     .select_related("project__client"))
+    for inv in open_invoices:
+        if inv.outstanding <= 0:
+            continue
+        client = inv.project.client
+        payers = [m.user for m in client.memberships.select_related("user") if m.can_see_payments]
+        body = f"Qoldiq: {inv.outstanding} {inv.currency}, muddat {inv.due_date:%d.%m.%Y}"
+        late = (today - inv.due_date).days
+        if late < 0:
+            notify(payers, "invoice.due", f"To‘lov muddati yaqin: {inv.number}", body=body, link="/portal/invoices",
+                   dedupe_key=f"invdue:{inv.pk}:{inv.due_date:%Y%m%d}")
+        elif late > 0:
+            notify(payers, "invoice.overdue", f"To‘lov muddati o‘tdi: {inv.number}", body=body, link="/portal/invoices",
+                   dedupe_key=f"invover:{inv.pk}:{inv.due_date:%Y%m%d}")
+            notify(_managers(), "invoice.overdue", f"Qarzdor mijoz: {client.name}", body=f"{inv.number} · {body}",
+                   link="/app/finance?tab=debts", dedupe_key=f"invoverm:{inv.pk}:{late // 7}")
+
+
+def payroll_sheet(now):
+    """O'tgan oy vedomosti 5-sanagacha tasdiqlanmasa, rahbarga eslatma."""
+    today = timezone.localtime(now).date()
+    if today.day < 5:
+        return
+    last = today.replace(day=1) - timedelta(days=1)
+    sheet = PayrollSheet.objects.filter(year=last.year, month=last.month).first()
+    if (sheet is None or sheet.status == PayrollSheet.DRAFT) and sheet_rows(last.year, last.month):
+        notify(_managers(), "payroll.sheet_due", f"{last:%m.%Y} maosh vedomosti tasdiqlanmagan",
+               body="Xodimlarga to‘lash uchun vedomostni tasdiqlang.", link="/app/payroll",
+               dedupe_key=f"sheetdue:{last:%Y%m}")
+
+
 def run_due(now=None):
     now = now or timezone.now()
     local = timezone.localtime(now)
@@ -157,6 +196,9 @@ def run_due(now=None):
     if local.time() >= MORNING:
         morning_digest(local.date())
         daily_lead_report(now)
+        run_recurring(local.date())
+        invoices(now)
+        payroll_sheet(now)
     if local.time() >= RATE_CHECK:
         if settings.CBU_AUTO_FETCH and not ExchangeRate.objects.filter(currency="USD", date=local.date()).exists():
             try:

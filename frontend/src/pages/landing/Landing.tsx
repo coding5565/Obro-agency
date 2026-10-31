@@ -8,7 +8,7 @@ import './landing.css'
 
 // Narx va xizmatlar tijoriy taklifdan. Mijozlar soni yoki sharh kabi tasdiqlanmagan raqam yozilmaydi.
 const TELEGRAM = 'https://t.me/im_ibrokhimov'
-const INSTAGRAM = 'https://www.instagram.com/obro.agency/'
+const INSTAGRAM = 'https://www.instagram.com/obroagency/'
 const MAP = 'https://www.google.com/maps/search/?api=1&query=C-space+coworking+Farg%27ona'
 const PHONE = '+998936444039'
 const PHONE_TEXT = '+998 93 644 40 39'
@@ -447,7 +447,7 @@ function Contact() {
         <Reveal className="mt-6">
           <div className="grid gap-2.5 sm:grid-cols-3">
             <a href={TELEGRAM} target="_blank" rel="noreferrer" className="flex min-h-[68px] items-center gap-3.5 rounded-2xl bg-ink p-4 text-ivory"><TelegramIcon /><span><b className="block text-[15px]">@im_ibrokhimov</b><span className="text-[12.5px] text-ivory/70">Telegram</span></span></a>
-            <a href={INSTAGRAM} target="_blank" rel="noreferrer" className="flex min-h-[68px] items-center gap-3.5 rounded-2xl bg-white p-4"><InstagramIcon /><span><b className="block text-[15px]">@obro.agency</b><span className="text-[12.5px] text-text-2">Instagram</span></span></a>
+            <a href={INSTAGRAM} target="_blank" rel="noreferrer" className="flex min-h-[68px] items-center gap-3.5 rounded-2xl bg-white p-4"><InstagramIcon /><span><b className="block text-[15px]">@obroagency</b><span className="text-[12.5px] text-text-2">Instagram</span></span></a>
             <a href={MAP} target="_blank" rel="noreferrer" className="flex min-h-[68px] items-center gap-3.5 rounded-2xl bg-white p-4"><MapPin size={20} /><span><b className="block text-[15px]">C-space coworking</b><span className="text-[12.5px] text-text-2">Farg‘ona</span></span></a>
           </div>
         </Reveal>

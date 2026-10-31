@@ -4,9 +4,12 @@ import { get } from '../../shared/api/client'
 import type { MyPayroll } from '../../shared/api/types'
 import { date, money, monthKey, pct } from '../../shared/lib/format'
 import { Card, Empty, Kicker, PageHeader, Spinner, Stat, Table } from '../../shared/ui'
+import { useAuth } from '../../shared/auth/AuthProvider'
+import { MyExpenses } from './Finance'
 import { MonthPicker } from './Payroll'
 
 export function MyPayrollPage() {
+  const { can } = useAuth()
   const [month, setMonth] = useState(monthKey())
   const data = useQuery({ queryKey: ['payroll-me', month], queryFn: () => get<MyPayroll>('/payroll/me/', { month }) })
   const d = data.data
@@ -38,6 +41,7 @@ export function MyPayrollPage() {
           )}
         </>
       )}
+      {can('expenses.request') && <MyExpenses />}
     </>
   )
 }
