@@ -35,7 +35,7 @@ export function Shell({ nav, footer }: { nav: NavItem[]; footer?: ReactNode }) {
 
   const menu = (
     <nav className="flex h-full flex-col" aria-label="Asosiy menyu">
-      <Link to="/" className="mb-8 block px-2 pt-1"><Logo size="sm" /></Link>
+      <Link to={portal ? '/portal' : '/app'} className="mb-8 block px-2 pt-1"><Logo size="sm" /></Link>
       <div className="flex-1 space-y-0.5 overflow-y-auto">
         {nav.map((item) =>
           item.locked ? (

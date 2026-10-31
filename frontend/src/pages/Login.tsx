@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { useAuth } from '../shared/auth/AuthProvider'
 import { Button, ErrorBox, Field, Input, Logo } from '../shared/ui'
 
@@ -26,7 +26,21 @@ export function BrandPanel() {
   )
 }
 
-export function LoginPage() {
+const DOORS = {
+  client: {
+    title: 'Mijoz', accent: 'kabineti',
+    text: 'Telefon raqamingiz va parolingiz bilan kiring.',
+    note: 'Akkaunt agentlik tomonidan ochiladi. Parolni unutgan bo‘lsangiz, SMM menejeringizga yozing.',
+  },
+  staff: {
+    title: 'Jamoa', accent: 'paneli',
+    text: 'OBRO AGENCY xodimlari uchun kirish.',
+    note: 'Akkauntni rahbar ochadi. Parolni unutgan bo‘lsangiz, rahbarga yozing.',
+  },
+}
+
+export function LoginPage({ door = 'client' }: { door?: keyof typeof DOORS }) {
+  const copy = DOORS[door]
   const { user, login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -44,7 +58,7 @@ export function LoginPage() {
     try {
       const me = await login(phone, password)
       const from = (location.state as { from?: string } | null)?.from
-      const fits = from && from !== '/login' && from.startsWith(me.is_client ? '/portal' : '/app')
+      const fits = from && from.startsWith(me.is_client ? '/portal' : '/app')
       navigate(fits ? from : me.is_client ? '/portal' : '/app', { replace: true })
     } catch (err) {
       setError(err)
@@ -60,8 +74,8 @@ export function LoginPage() {
         <form onSubmit={submit} className="w-full max-w-[360px] animate-enter space-y-5">
           <Logo tone="dark" size="md" className="mb-4 lg:hidden" />
           <div>
-            <h1 className="font-display text-[26px] font-semibold">Xush <span className="accent text-[1.15em]">kelibsiz</span></h1>
-            <p className="mt-1.5 text-muted">Telefon raqamingiz va parolingiz bilan kiring.</p>
+            <h1 className="font-display text-[26px] font-semibold">{copy.title} <span className="accent text-[1.15em]">{copy.accent}</span></h1>
+            <p className="mt-1.5 text-muted">{copy.text}</p>
           </div>
           <Field label="Telefon raqam">
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" autoComplete="username" required />
@@ -71,7 +85,8 @@ export function LoginPage() {
           </Field>
           <ErrorBox error={error} />
           <Button type="submit" className="w-full min-h-11" disabled={busy}>{busy ? 'Kirilmoqda…' : 'Kirish'}</Button>
-          <p className="text-[12.5px] text-muted">Akkaunt agentlik tomonidan ochiladi. Parolni unutgan bo‘lsangiz, SMM menejeringizga yozing.</p>
+          <p className="text-[12.5px] text-muted">{copy.note}</p>
+          <Link to="/" className="inline-flex min-h-9 items-center text-[13px] font-semibold text-bronze">← Bosh sahifaga qaytish</Link>
         </form>
       </div>
     </div>
