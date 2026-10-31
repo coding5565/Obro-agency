@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { BarChart3, CalendarDays, CheckCircle2, Home, MessageSquarePlus, NotebookPen, Receipt } from 'lucide-react'
+import { BarChart3, CalendarDays, Camera, CheckCircle2, Home, Magnet, MessageSquarePlus, NotebookPen, Receipt } from 'lucide-react'
 import { Shell } from './Shell'
 import type { NavItem } from './Shell'
 import { get } from '../shared/api/client'
@@ -21,6 +21,8 @@ export function PortalLayout() {
     { to: '/portal', label: 'Bosh sahifa', icon: <Home size={17} />, end: true },
     item('calendar', { to: '/portal/calendar', label: 'Kalendar', icon: <CalendarDays size={17} /> }),
     item('approvals', { to: '/portal/approvals', label: 'Tasdiqlash', icon: <CheckCircle2 size={17} />, badge: approvals.data?.length }),
+    { to: '/portal/shoots', label: 'Syomka kunlari', icon: <Camera size={17} /> },
+    item('leads', { to: '/portal/leads', label: 'Lidlar', icon: <Magnet size={17} /> }),
     item('worklog', { to: '/portal/worklog', label: 'Bugun nima qilindi', icon: <NotebookPen size={17} /> }),
     item('metrics', { to: '/portal/results', label: 'Natijalar', icon: <BarChart3 size={17} /> }),
   ]

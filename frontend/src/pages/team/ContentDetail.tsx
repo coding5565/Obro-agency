@@ -48,6 +48,7 @@ export function ContentDetailPage() {
         subtitle={<span className="flex flex-wrap items-center gap-2">{it.client_name} · {it.kind_label} · {date(it.planned_date)} <StatusBadge status={it.status} label={it.status_label} /></span>}
         actions={
           <>
+            {can('content.manage') && <Link to={`/app/briefs?new=1&project=${it.project}&item=${it.id}&title=${encodeURIComponent(it.title)}`}><Button variant="ghost">TZ yozish</Button></Link>}
             {can('content.upload') && !['published', 'cancelled'].includes(it.status) && <Button variant="ghost" onClick={() => setUploading(true)}><Upload size={15} />Versiya yuklash</Button>}
             {manage && ['internal_review', 'changes'].includes(it.status) && it.latest_version && (
               <Button onClick={() => action.mutate('send-to-client')}><Send size={15} />Mijozga yuborish</Button>

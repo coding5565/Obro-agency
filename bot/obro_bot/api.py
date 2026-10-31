@@ -70,6 +70,22 @@ class Api:
         return await self._call("POST", f"/bot/approvals/{item_id}/",
                                 json={"chat_id": chat_id, "decision": decision, "comment": comment})
 
+    # Lidlar, TZ, syomka
+    async def lead_status(self, chat_id: int, lead_id: int, status: str):
+        return await self._call("POST", f"/bot/leads/{lead_id}/status/", json={"chat_id": chat_id, "status": status})
+
+    async def briefs(self, chat_id: int):
+        return await self._call("GET", "/bot/briefs/", params={"chat_id": chat_id})
+
+    async def brief_accept(self, chat_id: int, brief_id: int):
+        return await self._call("POST", f"/bot/briefs/{brief_id}/accept/", json={"chat_id": chat_id})
+
+    async def shoots(self, chat_id: int):
+        return await self._call("GET", "/bot/shoots/", params={"chat_id": chat_id})
+
+    async def shoot_confirm(self, chat_id: int, shoot_id: int):
+        return await self._call("POST", f"/bot/shoots/{shoot_id}/confirm/", json={"chat_id": chat_id})
+
     # Rejali ishlar
     async def daily_job(self):
         return await self._call("POST", "/bot/jobs/daily/", json={})

@@ -121,9 +121,35 @@ RestartSec=3
 [Install]
 WantedBy=multi-user.target
 EOF
+cat > /etc/systemd/system/obro-panel-reminders.service <<EOF
+[Unit]
+Description=OBRO' Panel ogohlantirishlari
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+User=obro
+Group=obro
+WorkingDirectory=$APP/backend
+EnvironmentFile=$ENV_FILE
+ExecStart=$VENV/bin/python manage.py run_reminders
+EOF
+cat > /etc/systemd/system/obro-panel-reminders.timer <<EOF
+[Unit]
+Description=OBRO' Panel ogohlantirishlari: har 5 daqiqada
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
 systemctl daemon-reload
 systemctl enable --now obro-panel-api >/dev/null
 systemctl restart obro-panel-api
+systemctl enable --now obro-panel-reminders.timer >/dev/null
 
 log "nginx (port $PUBLIC_PORT, faqat yangi fayl)"
 cat > /etc/nginx/sites-available/obro-panel <<EOF

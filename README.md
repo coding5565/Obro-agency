@@ -48,6 +48,11 @@ Telefonlar `+998900000001` … `+998900000006`: super admin, rahbar, SMM menejer
 Parol — `backend/apps/core/management/commands/seed_obro.py` dagi `DEMO_PASSWORD_DEFAULT` (yoki `DEMO_PASSWORD` muhit o‘zgaruvchisi).
 Serverda `--demo` ishlatilmaydi.
 
+## Lidlar, TZ, syomka
+
+Lid qabul qilish (Yuboraman, sayt), TZ oqimi, syomka kalendari va ogohlantirishlar: `docs/lidlar.md`.
+Ogohlantirishlar uchun `python manage.py run_reminders` har 5 daqiqada ishga tushishi kerak.
+
 ## Testlar
 
 ```powershell

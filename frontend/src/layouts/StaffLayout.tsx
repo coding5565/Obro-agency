@@ -1,4 +1,4 @@
-import { BadgeDollarSign, CalendarDays, ClipboardList, Gauge, LayoutDashboard, NotebookPen, Package, Users, UsersRound, Wallet } from 'lucide-react'
+import { BadgeDollarSign, CalendarDays, Camera, ClipboardList, FileText, Gauge, LayoutDashboard, Magnet, NotebookPen, Package, Users, UsersRound, Wallet } from 'lucide-react'
 import { Shell } from './Shell'
 import type { NavItem } from './Shell'
 import { useAuth } from '../shared/auth/AuthProvider'
@@ -6,7 +6,10 @@ import { useAuth } from '../shared/auth/AuthProvider'
 const ITEMS: (NavItem & { perm?: string })[] = [
   { to: '/app', label: 'Bosh sahifa', icon: <LayoutDashboard size={17} />, end: true },
   { to: '/app/clients', label: 'Mijozlar', icon: <UsersRound size={17} />, perm: 'clients.view' },
+  { to: '/app/leads', label: 'Lidlar', icon: <Magnet size={17} />, perm: 'leads.view' },
   { to: '/app/content', label: 'Kontent', icon: <CalendarDays size={17} />, perm: 'content.view' },
+  { to: '/app/schedule', label: 'Syomka', icon: <Camera size={17} />, perm: 'content.view' },
+  { to: '/app/briefs', label: 'TZ', icon: <FileText size={17} />, perm: 'content.view' },
   { to: '/app/tasks', label: 'Vazifalar', icon: <ClipboardList size={17} />, perm: 'tasks.view' },
   { to: '/app/worklog', label: 'Ish jurnali', icon: <NotebookPen size={17} />, perm: 'worklog.create' },
   { to: '/app/metrics', label: 'Ko‘rsatkichlar', icon: <Gauge size={17} />, perm: 'metrics.manage' },

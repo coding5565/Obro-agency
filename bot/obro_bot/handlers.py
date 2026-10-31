@@ -18,9 +18,12 @@ NOT_LINKED = ("Bu Telegram akkaunti OBRO’ Panel’ga ulanmagan.\n\n"
 STAFF_HELP = ("Buyruqlar:\n"
               "/bugun — bugungi va muddati yaqin vazifalar\n"
               "/jurnal — ish jurnaliga yozish (1 daqiqa)\n"
+              "/tz — menga berilgan TZ’lar\n"
+              "/syomka — yaqin syomkalar\n"
+              "/id — shu chat raqami (lidlar guruhi uchun)\n"
               "/uzish — botni akkauntdan uzish")
 CLIENT_HELP = ("Material tayyor bo‘lsa, shu yerga xabar keladi — «Tasdiqlayman» yoki «Izoh qoldirish» "
-               "tugmasini bosasiz.\n/uzish — botni akkauntdan uzish")
+               "tugmasini bosasiz.\n/syomka — yaqin syomkalar\n/uzish — botni akkauntdan uzish")
 
 
 class Journal(StatesGroup):
@@ -189,6 +192,91 @@ async def send_changes(message: Message, api: Api, state: FSMContext):
         return
     await state.clear()
     await message.answer(f"✍️ Izohingiz jamoaga yuborildi: <b>{escape(result['title'])}</b>.")
+
+
+# ---------- Lidlar, TZ, syomka ----------
+
+@router.message(Command("id"))
+async def chat_id(message: Message):
+    """Guruh raqami: lidlar shu guruhga tushishi uchun panelga yoziladi."""
+    await message.answer(f"Bu chat raqami: <code>{message.chat.id}</code>")
+
+
+async def _lead_action(callback: CallbackQuery, api: Api, status: str, done: str):
+    lead_id = int(callback.data.split(":")[1])
+    try:
+        result = await api.lead_status(callback.message.chat.id, lead_id, status)
+    except ApiError as exc:
+        await callback.answer(exc.message, show_alert=True)
+        return
+    await callback.answer(done)
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.answer(f"{done}: {escape(result['name'])}")
+
+
+@router.callback_query(F.data.startswith("lc:"))
+async def lead_contacted(callback: CallbackQuery, api: Api):
+    await _lead_action(callback, api, "contacted", "📞 Bog‘lanildi")
+
+
+@router.callback_query(F.data.startswith("ls:"))
+async def lead_spam(callback: CallbackQuery, api: Api):
+    await _lead_action(callback, api, "spam", "🚫 Spam")
+
+
+@router.callback_query(F.data.startswith("ba:"))
+async def brief_accept(callback: CallbackQuery, api: Api):
+    try:
+        result = await api.brief_accept(callback.message.chat.id, int(callback.data.split(":")[1]))
+    except ApiError as exc:
+        await callback.answer(exc.message, show_alert=True)
+        return
+    await callback.answer("Qabul qilindi 👍")
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.answer(f"👍 TZ qabul qilindi: <b>{escape(result['title'])}</b>")
+
+
+@router.callback_query(F.data.startswith("sc:"))
+async def shoot_confirm(callback: CallbackQuery, api: Api):
+    try:
+        result = await api.shoot_confirm(callback.message.chat.id, int(callback.data.split(":")[1]))
+    except ApiError as exc:
+        await callback.answer(exc.message, show_alert=True)
+        return
+    await callback.answer("Tasdiqlandi ✅")
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.answer(f"✅ Syomka tasdiqlandi: {escape(result['when'])}")
+
+
+@router.message(Command("tz"))
+async def my_briefs(message: Message, api: Api):
+    try:
+        briefs = await api.briefs(message.chat.id)
+    except ApiError as exc:
+        await message.answer(escape(exc.message) if exc.status != 404 else NOT_LINKED)
+        return
+    if not briefs:
+        await message.answer("Ochiq TZ yo‘q. 👍")
+        return
+    lines = []
+    for b in briefs:
+        due = f" — {b['deadline'][8:10]}.{b['deadline'][5:7]}" if b["deadline"] else ""
+        lines.append(f"• {escape(b['title'])} <i>({escape(b['client'])}{due}, {escape(b['status'])})</i>")
+    await message.answer("<b>Sizning TZ’laringiz</b>\n" + "\n".join(lines))
+
+
+@router.message(Command("syomka"))
+async def my_shoots(message: Message, api: Api):
+    try:
+        shoots = await api.shoots(message.chat.id)
+    except ApiError as exc:
+        await message.answer(escape(exc.message) if exc.status != 404 else NOT_LINKED)
+        return
+    if not shoots:
+        await message.answer("Rejada syomka yo‘q.")
+        return
+    lines = [f"• {escape(s['when'])} <i>({escape(s['client'])})</i>" for s in shoots]
+    await message.answer("<b>Yaqin syomkalar</b>\n" + "\n".join(lines))
 
 
 @router.message(F.text)

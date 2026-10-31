@@ -14,7 +14,12 @@ from apps.accounts.models import Position
 from apps.clients.selectors import client_for_portal
 from apps.content import models as cm
 from apps.content.services import client_decide
+from apps.content.shoots import client_confirm
 from apps.finance.models import Invoice
+from apps.leads import models as lead_models
+from apps.leads import services as lead_services
+from apps.leads.models import Lead
+from apps.leads.views import parse_when
 from apps.metrics.models import AdStat, MetricSnapshot
 from apps.notifications.services import notify, project_smm_managers
 from apps.portal import serializers as ps
@@ -95,8 +100,12 @@ class DashboardView(PortalView):
             data["metrics"] = _metrics_summary(self.client)
         if "ads" in self.features:
             data["ads"] = _ads_summary(project, begin, end)
-        upcoming = project.shoot_days.filter(date__gte=today, status="planned").order_by("date")[:3]
-        data["shoot_days"] = [{"date": s.date, "location": s.location} for s in upcoming]
+        upcoming = project.shoot_days.filter(date__gte=today, status="planned").order_by("date", "start_time")[:3]
+        data["shoot_days"] = [{"id": s.id, "date": s.date, "start_time": s.start_time, "location": s.location,
+                               "client_prep": s.client_prep, "client_confirmed_at": s.client_confirmed_at}
+                              for s in upcoming]
+        if "leads" in self.features:
+            data["leads"] = lead_services.stats(Lead.objects.filter(project=project))
         return Response(data)
 
 
@@ -131,11 +140,19 @@ def _ads_summary(project, begin, end):
         t["leads"] += stat.leads
         t["clicks"] += stat.clicks
         t["impressions"] += stat.impressions
+    # CRM'ga tushgan haqiqiy lidlar bor bo'lsa, ular qo'lda kiritilgan raqamdan ustun (takror va spam sanalmaydi).
+    real = lead_services.counted(Lead.objects.filter(project=project, created_at__date__range=(begin, end)))
+    real_count = real.count()
+    won = real.filter(status=lead_models.WON).count()
     result = []
     for currency, t in totals.items():
+        if real_count and len(totals) == 1:
+            t["leads"] = real_count
         cpl = q(t["spend"] / t["leads"]) if t["leads"] else None
+        cps = q(t["spend"] / won) if won and len(totals) == 1 else None
         result.append({"currency": currency, "spend": str(q(t["spend"])), "leads": t["leads"], "clicks": t["clicks"],
-                       "impressions": t["impressions"], "cost_per_lead": str(cpl) if cpl is not None else None})
+                       "impressions": t["impressions"], "cost_per_lead": str(cpl) if cpl is not None else None,
+                       "won": won, "cost_per_sale": str(cps) if cps is not None else None})
     return result
 
 
@@ -241,3 +258,47 @@ class RequestView(PortalView):
         )
         notify(managers, "client.request", f"{self.client.name}: yangi so‘rov", body=text, link=f"/app/tasks/{task.pk}")
         return Response({"ok": True}, status=status.HTTP_201_CREATED)
+
+
+class LeadsView(PortalView):
+    feature = "leads"
+
+    def get(self, request):
+        if self.project is None:
+            return Response({"results": [], "stats": None})
+        leads = Lead.objects.filter(project=self.project).exclude(status=lead_models.SPAM).prefetch_related("events")
+        value = request.query_params.get("status")
+        filtered = leads.filter(status=value) if value else leads
+        return Response({"results": ps.PortalLeadSerializer(filtered[:300], many=True).data,
+                         "stats": lead_services.stats(Lead.objects.filter(project=self.project))})
+
+
+class LeadDetailView(PortalView):
+    feature = "leads"
+
+    def patch(self, request, pk):
+        lead = get_object_or_404(Lead.objects.filter(project__client=self.client), pk=pk)
+        data = request.data
+        if "status" in data:
+            lead_services.set_status(lead, data["status"], by=request.user, lost_reason=data.get("lost_reason", ""),
+                                     sale_amount=data.get("sale_amount"), sale_currency=data.get("sale_currency"))
+        if "next_contact_at" in data:
+            lead_services.schedule(lead, parse_when(data["next_contact_at"]), by=request.user)
+        if data.get("comment"):
+            lead_services.comment(lead, data["comment"], by=request.user)
+        return Response(ps.PortalLeadSerializer(lead).data)
+
+
+class ShootsView(PortalView):
+    """Syomka kunlari har qanday tarifda ko'rinadi: mijoz tayyorlanishi kerak."""
+
+    def get(self, request):
+        shoots = cm.ShootDay.objects.filter(project__client=self.client,
+                                            date__gte=timezone.localdate() - timedelta(days=30))
+        return Response(ps.PortalShootSerializer(shoots, many=True).data)
+
+
+class ShootConfirmView(PortalView):
+    def post(self, request, pk):
+        shoot = get_object_or_404(cm.ShootDay.objects.filter(project__client=self.client, status="planned"), pk=pk)
+        return Response(ps.PortalShootSerializer(client_confirm(shoot, by=request.user)).data)

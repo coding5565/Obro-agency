@@ -15,9 +15,13 @@ from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.content import briefs
 from apps.content import models as cm
 from apps.content.services import client_decide
+from apps.content.shoots import client_confirm, when_text
 from apps.finance.rates import RateFetchError, store_cbu_rate
+from apps.leads import models as lm
+from apps.leads import services as lead_services
 from apps.tasks.models import DONE, Task
 from apps.tasks.services import set_task_status
 from apps.telegram import services
@@ -171,3 +175,50 @@ class BotDailyJobView(BotView):
 class BotEveningJobView(BotView):
     def post(self, request):
         return Response({"reminders": len(services.evening_reminders())})
+
+
+class BotLeadStatusView(BotView):
+    """«Bog'lanildi» va «Spam» tugmalari."""
+
+    def post(self, request, pk):
+        user = self.chat_user(request)
+        lead = get_object_or_404(lm.Lead.objects.select_related("project__client", "project__tariff_version"), pk=pk)
+        value = request.data.get("status")
+        if value not in (lm.CONTACTED, lm.SPAM):
+            raise serializers.ValidationError({"status": "contacted yoki spam"})
+        lead_services.set_status(lead, value, by=user)
+        return Response({"ok": True, "status": lead.get_status_display(), "name": lead_services.lead_text(lead)})
+
+
+class BotBriefsView(BotView):
+    def get(self, request):
+        user = self.chat_user(request)
+        if user.is_client:
+            raise PermissionDenied("TZ jamoa uchun")
+        return Response(services.my_briefs(user))
+
+
+class BotBriefAcceptView(BotView):
+    def post(self, request, pk):
+        user = self.chat_user(request)
+        if user.is_client:
+            raise PermissionDenied("TZ jamoa uchun")
+        brief = get_object_or_404(cm.Brief, pk=pk, assignee=user)
+        briefs.accept(brief, by=user)
+        return Response({"ok": True, "title": brief.title})
+
+
+class BotShootsView(BotView):
+    def get(self, request):
+        return Response(services.my_shoots(self.chat_user(request)))
+
+
+class BotShootConfirmView(BotView):
+    def post(self, request, pk):
+        user = self.chat_user(request)
+        if not user.is_client:
+            raise PermissionDenied("Tasdiqlash mijoz uchun")
+        shoot = get_object_or_404(cm.ShootDay.objects.select_related("project__client"), pk=pk, status="planned",
+                                  project__client__memberships__user=user)
+        client_confirm(shoot, by=user)
+        return Response({"ok": True, "when": when_text(shoot)})

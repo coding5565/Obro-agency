@@ -88,6 +88,7 @@ export const STATUS_TONE: Record<string, Tone> = {
   overdue: 'bad', changes: 'bad', rejected: 'bad', cancelled: 'draft', churned: 'draft',
   draft: 'draft', idea: 'draft', lead: 'info', in_work: 'info', script: 'info', shooting: 'info',
   editing: 'info', internal_review: 'info', in_progress: 'info', todo: 'draft', paused: 'draft',
+  sent: 'warn', review: 'warn', planned: 'info',
 }
 
 export function StatusBadge({ status, label }: { status: string; label: string }) {

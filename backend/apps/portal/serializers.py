@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from apps.content import models as cm
 from apps.content.services import revisions_left
+from apps.leads.models import Lead, LeadEvent
 from common.calc.invoices import STATUS_LABELS
 from common.files import signed_version_url
 
@@ -130,3 +131,34 @@ class PortalInvoiceSerializer(serializers.Serializer):
     def get_lines(self, invoice):
         return [{"description": line.description, "quantity": str(line.quantity), "amount": str(line.amount)}
                 for line in invoice.lines.all()]
+
+
+class PortalLeadEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LeadEvent
+        fields = ["id", "kind", "text", "created_at"]
+
+
+class PortalLeadSerializer(serializers.ModelSerializer):
+    """Xom ma'lumot (raw) va ichki mas'ul mijozga chiqmaydi."""
+
+    status_label = serializers.CharField(source="get_status_display")
+    is_duplicate = serializers.BooleanField()
+    events = PortalLeadEventSerializer(many=True)
+
+    class Meta:
+        model = Lead
+        fields = ["id", "full_name", "phone", "email", "city", "message", "form_name", "campaign_name",
+                  "source_label", "status", "status_label", "is_duplicate", "next_contact_at", "sale_amount",
+                  "sale_currency", "lost_reason", "created_at", "events"]
+
+
+class PortalShootSerializer(serializers.ModelSerializer):
+    """Ishtirokchilar va ichki izoh mijozga chiqmaydi."""
+
+    status_label = serializers.CharField(source="get_status_display")
+
+    class Meta:
+        model = cm.ShootDay
+        fields = ["id", "date", "start_time", "end_time", "location", "client_prep", "client_confirmed_at", "status",
+                  "status_label", "brandface_name"]

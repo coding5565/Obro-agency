@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "apps.notifications",
     "apps.portal",
     "apps.telegram",
+    "apps.leads",
 ]
 
 MIDDLEWARE = [
@@ -148,6 +149,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
+        "lead_hook": "120/min",
     },
     "COERCE_DECIMAL_TO_STRING": True,
 }
@@ -191,3 +193,7 @@ TELEGRAM_LINK_MINUTES = 15
 BASE_CURRENCY = "UZS"
 INVOICE_DUE_DAYS = int(env("INVOICE_DUE_DAYS", "5"))
 FRONTEND_URL = env("FRONTEND_URL", "http://localhost:5173")
+
+# Javobsiz lid: shuncha daqiqadan keyin mas'ulga, keyin rahbarga eslatiladi.
+LEAD_SLA_MINUTES = int(env("LEAD_SLA_MINUTES", "15"))
+LEAD_ESCALATE_MINUTES = int(env("LEAD_ESCALATE_MINUTES", "60"))

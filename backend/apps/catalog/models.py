@@ -17,12 +17,13 @@ PANEL_FEATURES = {
     "invoices": "To‘lovlar",
     "worklog": "Kunlik ish jurnali",
     "metrics": "Ko‘rsatkichlar",
-    "ads": "Reklama va lidlar",
+    "ads": "Reklama natijalari",
+    "leads": "Lidlar ro‘yxati",
     "weekly_review": "Haftalik tahlil izohi",
     "requests": "So‘rov yuborish",
 }
 BASIC_FEATURES = ["dashboard", "calendar", "approvals", "monthly_report", "invoices", "requests"]
-FULL_FEATURES = BASIC_FEATURES + ["worklog", "metrics", "ads"]
+FULL_FEATURES = BASIC_FEATURES + ["worklog", "metrics", "ads", "leads"]
 
 
 class Tariff(models.Model):

@@ -144,7 +144,9 @@ class TestScheduledJobs:
         link(team["design"], 9002)
         WorkLogEntry.objects.create(user=team["design"], project=project, date=timezone.localdate(), title="Dizayn")
         response = bot().post("/api/v1/bot/jobs/evening/", {}, format="json")
-        assert response.data["reminders"] == 1
+        # Telegram ulanmagan SMM ham eslatma oladi: u panelda ko'rinadi. Jurnali to'lgan dizaynerga bormaydi.
+        assert response.data["reminders"] == 2
+        assert not Notification.objects.filter(user=team["design"], kind="worklog.reminder").exists()
         assert Notification.objects.filter(user=team["video"], kind="worklog.reminder").exists()
 
     def test_morning_digest_for_managers(self, rahbar, monkeypatch):

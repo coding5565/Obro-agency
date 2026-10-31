@@ -15,4 +15,4 @@ TELEGRAM_BOT_USERNAME = "obro_test_bot"
 TELEGRAM_BOT_API_SECRET = "test-bot-secret-0123456789"
 # Testlar tez ishlashi uchun oddiy hasher.
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
-REST_FRAMEWORK = {**REST_FRAMEWORK, "DEFAULT_THROTTLE_RATES": {"login": "1000/min"}}  # noqa: F405
+REST_FRAMEWORK = {**REST_FRAMEWORK, "DEFAULT_THROTTLE_RATES": {"login": "1000/min", "lead_hook": "1000/min"}}  # noqa: F405

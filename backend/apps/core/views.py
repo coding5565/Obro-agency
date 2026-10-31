@@ -1,4 +1,5 @@
 from collections import Counter
+from datetime import timedelta
 
 from django.db.models import Sum
 from django.utils import timezone
@@ -9,8 +10,12 @@ from rest_framework.views import APIView
 from apps.clients.models import Client, Project
 from apps.clients.selectors import visible_projects
 from apps.content import models as cm
+from apps.content.shoots import when_text
 from apps.core.models import AuditLog
 from apps.finance.models import Invoice, Payment
+from apps.leads import models as lead_models
+from apps.leads.models import Lead
+from apps.leads.services import counted
 from apps.tasks import models as tm
 from apps.worklog import models as wl
 from common import access
@@ -33,6 +38,35 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [ObroPermission]
     required_perms = {"read": access.AUDIT_VIEW}
     filterset_fields = ["action", "entity_type", "entity_id", "actor"]
+
+
+def _alerts(user, projects, today):
+    """Bosh ekrandagi ogohlantirishlar: bugun e'tibor talab qiladigan narsalar."""
+    alerts = []
+    tomorrow = today + timedelta(days=1)
+    shoots = cm.ShootDay.objects.filter(project__in=projects, status="planned", date__in=[today, tomorrow])
+    if not user.has_obro_perm(access.CONTENT_MANAGE):
+        shoots = shoots.filter(participants=user)
+    for shoot in shoots.select_related("project__client").distinct():
+        day = "Bugun" if shoot.date == today else "Ertaga"
+        alerts.append({"level": "warn" if shoot.date == today else "info", "link": "/app/schedule",
+                       "title": f"{day} syomka: {shoot.project.client.name} · {when_text(shoot)}"})
+    if user.has_obro_perm(access.CONTENT_VIEW):
+        mine = cm.Brief.objects.filter(project__in=projects, status__in=cm.Brief.OPEN)
+        if not user.has_obro_perm(access.CONTENT_MANAGE):
+            mine = mine.filter(assignee=user)
+        late = mine.filter(deadline__lt=timezone.now()).count()
+        if late:
+            alerts.append({"level": "danger", "title": f"Muddati o‘tgan TZ: {late} ta", "link": "/app/briefs"})
+        unaccepted = mine.filter(status=cm.Brief.SENT).count()
+        if unaccepted:
+            alerts.append({"level": "info", "title": f"Qabul qilinmagan TZ: {unaccepted} ta", "link": "/app/briefs"})
+    if user.has_obro_perm(access.LEADS_VIEW):
+        waiting = counted(Lead.objects.filter(project__in=projects, status=lead_models.NEW)).count()
+        if waiting:
+            alerts.append({"level": "danger", "title": f"Javob kutayotgan lidlar: {waiting} ta",
+                           "link": "/app/leads?status=new"})
+    return alerts
 
 
 class DashboardView(APIView):
@@ -62,6 +96,7 @@ class DashboardView(APIView):
                                                        published_at__month=today.month).count(),
             },
             "active_projects": projects.count(),
+            "alerts": _alerts(user, projects, today),
         }
         if user.has_obro_perm(access.WORKLOG_APPROVE):
             data["worklog_pending"] = wl.WorkLogEntry.objects.filter(project__in=projects,

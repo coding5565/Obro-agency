@@ -122,7 +122,12 @@ class ShootDay(models.Model):
     project = models.ForeignKey("clients.Project", on_delete=models.CASCADE, related_name="shoot_days")
     date = models.DateField()
     start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
     location = models.CharField(max_length=200, blank=True)
+    client_prep = models.TextField("Mijoz nima tayyorlasin", blank=True)
+    client_confirmed_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name="+")
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name="shoot_days")
     brandface_name = models.CharField(max_length=120, blank=True)
     brandface_videos = models.PositiveSmallIntegerField(default=0)
@@ -132,3 +137,56 @@ class ShootDay(models.Model):
 
     class Meta:
         ordering = ["date", "start_time"]
+
+
+class Brief(models.Model):
+    """TZ — SMM menejer ijodkorga beradigan texnik topshiriq. Mijozga ko'rinmaydi."""
+
+    DRAFT = "draft"
+    SENT = "sent"
+    IN_PROGRESS = "in_progress"
+    REVIEW = "review"
+    CHANGES = "changes"
+    DONE = "done"
+    CANCELLED = "cancelled"
+    STATUS_CHOICES = [
+        (DRAFT, "Qoralama"),
+        (SENT, "Yuborildi"),
+        (IN_PROGRESS, "Ishlanmoqda"),
+        (REVIEW, "Tekshiruvda"),
+        (CHANGES, "Qaytarildi"),
+        (DONE, "Bajarildi"),
+        (CANCELLED, "Bekor qilindi"),
+    ]
+    OPEN = {SENT, IN_PROGRESS, CHANGES}
+
+    project = models.ForeignKey("clients.Project", on_delete=models.CASCADE, related_name="briefs")
+    content_item = models.ForeignKey(ContentItem, null=True, blank=True, on_delete=models.SET_NULL,
+                                     related_name="briefs")
+    shoot_day = models.ForeignKey(ShootDay, null=True, blank=True, on_delete=models.SET_NULL, related_name="briefs")
+    title = models.CharField("Nima qilinadi", max_length=200)
+    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="briefs")
+    goal = models.TextField("Maqsad", blank=True)
+    script = models.TextField("Ssenariy / matn", blank=True)
+    shot_list = models.JSONField("Kadrlar ro'yxati", default=list, blank=True, help_text="[{text, done}]")
+    format = models.CharField("Format", max_length=120, blank=True, help_text="Masalan: 9:16, 30 soniya")
+    references = models.TextField("Namunalar (havolalar)", blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    talent = models.CharField("Kadrda kim", max_length=200, blank=True)
+    notes = models.TextField("Qo'shimcha", blank=True)
+    deadline = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=DRAFT)
+    review_comment = models.TextField(blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    seen_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["deadline", "-created_at"]
+        indexes = [models.Index(fields=["assignee", "status"])]
+
+    def __str__(self):
+        return self.title

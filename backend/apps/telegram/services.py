@@ -12,6 +12,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from apps.accounts.models import User
 from apps.clients.selectors import visible_projects
 from apps.content import models as cm
+from apps.content.shoots import when_text
 from apps.finance.models import Invoice
 from apps.notifications.models import Notification
 from apps.notifications.services import notify
@@ -80,24 +81,33 @@ def render(notification):
     if notification.body:
         lines.append(escape(notification.body))
     buttons = []
-    item_id = (notification.payload or {}).get("item_id")
+    payload = notification.payload or {}
+    item_id = payload.get("item_id")
     if notification.kind == "content.review" and item_id:
         buttons.append([{"text": "✅ Tasdiqlayman", "callback": f"ap:{item_id}"},
                         {"text": "✍️ Izoh qoldirish", "callback": f"ch:{item_id}"}])
+    if notification.kind in ("lead.new", "lead.assigned", "lead.sla") and payload.get("lead_id"):
+        lead_id = payload["lead_id"]
+        buttons.append([{"text": "📞 Bog‘lanildi", "callback": f"lc:{lead_id}"},
+                        {"text": "🚫 Spam", "callback": f"ls:{lead_id}"}])
+    if notification.kind == "brief.sent" and payload.get("brief_id"):
+        buttons.append([{"text": "👍 Qabul qildim", "callback": f"ba:{payload['brief_id']}"}])
+    if notification.kind == "shoot.confirm" and payload.get("shoot_id"):
+        buttons.append([{"text": "✅ Tasdiqlayman", "callback": f"sc:{payload['shoot_id']}"}])
     url = _panel_url(notification.link)
     if url:
         buttons.append([{"text": "Panelda ochish", "url": url}])
-    return {"id": notification.pk, "chat_id": notification.user.telegram_chat_id, "text": "\n".join(lines),
-            "buttons": buttons}
+    chat_id = notification.chat_id or notification.user.telegram_chat_id
+    return {"id": notification.pk, "chat_id": chat_id, "text": "\n".join(lines), "buttons": buttons}
 
 
 def outbox(limit=50):
     since = timezone.now() - OUTBOX_MAX_AGE
+    # Ulanishdan oldingi eski xabarlar botga yuborilmaydi. Guruh xabarlarida foydalanuvchi yo'q.
+    to_user = Q(user__is_active=True, user__telegram_chat_id__isnull=False,
+                created_at__gte=F("user__telegram_linked_at"))
     qs = (Notification.objects.select_related("user")
-          .filter(telegram_sent_at__isnull=True, user__is_active=True, user__telegram_chat_id__isnull=False,
-                  created_at__gte=since)
-          # Ulanishdan oldingi eski xabarlar botga yuborilmaydi.
-          .filter(created_at__gte=F("user__telegram_linked_at"))
+          .filter(to_user | Q(chat_id__isnull=False), telegram_sent_at__isnull=True, created_at__gte=since)
           .order_by("created_at")[:limit])
     return [render(n) for n in qs]
 
@@ -128,19 +138,20 @@ def morning_digest(today=None):
         f"Muddati o‘tgan vazifalar: {late_tasks}",
         f"Tekshiruv kutayotgan jurnal yozuvlari: {pending_log}",
     ]
-    managers = User.objects.filter(role__in=access.MANAGEMENT_ROLES, is_active=True, telegram_chat_id__isnull=False)
+    managers = User.objects.filter(role__in=access.MANAGEMENT_ROLES, is_active=True)
     return notify(managers, "digest.morning", f"Xayrli tong! {today:%d.%m.%Y} holati", body="\n".join(lines),
-                  link="/app")
+                  link="/app", dedupe_key=f"digest:{today:%Y%m%d}")
 
 
 def evening_reminders(today=None):
     """Kechqurun: bugun jurnalga hech narsa yozmagan jamoa a'zolariga eslatma."""
     today = today or timezone.localdate()
     staff = (User.objects.filter(role__in=[access.SMM, access.CREATOR], is_active=True,
-                                 telegram_chat_id__isnull=False, assignments__ended_at__isnull=True)
+                                 assignments__ended_at__isnull=True)
              .exclude(worklog__date=today).distinct())
     return notify(staff, "worklog.reminder", "Bugungi ish jurnalingiz bo‘sh",
-                  body="Bugun nima qildingiz? /jurnal buyrug‘i bilan 1 daqiqada yozib qo‘ying.", link="/app/worklog")
+                  body="Bugun nima qildingiz? /jurnal buyrug‘i bilan 1 daqiqada yozib qo‘ying.", link="/app/worklog",
+                  dedupe_key=f"worklog:{today:%Y%m%d}")
 
 
 # ---------- Bot buyruqlari (foydalanuvchi nomidan) ----------
@@ -186,3 +197,23 @@ def client_item(user, item_id):
     if item is None:
         raise NotFound("Kontent topilmadi")
     return item
+
+
+def my_briefs(user):
+    qs = (cm.Brief.objects.select_related("project__client")
+          .filter(assignee=user, status__in=cm.Brief.OPEN).order_by("deadline", "id")[:20])
+    return [{"id": b.id, "title": b.title, "client": b.project.client.name, "deadline": b.deadline,
+             "status": b.get_status_display()} for b in qs]
+
+
+def my_shoots(user):
+    """Jamoa a'zosi uchun o'z syomkalari, mijoz uchun o'z kompaniyasining syomkalari."""
+    today = timezone.localdate()
+    qs = cm.ShootDay.objects.select_related("project__client").filter(status="planned", date__gte=today)
+    if user.is_client:
+        qs = qs.filter(project__client__memberships__user=user)
+    elif not user.has_obro_perm(access.CONTENT_MANAGE):
+        qs = qs.filter(participants=user)
+    else:
+        qs = qs.filter(project__in=visible_projects(user))
+    return [{"id": s.id, "client": s.project.client.name, "when": when_text(s)} for s in qs.distinct()[:15]]

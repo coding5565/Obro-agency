@@ -11,18 +11,23 @@ import { PortalApprovalDetail, PortalApprovals } from './pages/portal/Approvals'
 import { PortalCalendar } from './pages/portal/Calendar'
 import { PortalHome } from './pages/portal/Home'
 import { PortalInvoices } from './pages/portal/Invoices'
+import { PortalLeads } from './pages/portal/Leads'
 import { PortalRequest } from './pages/portal/Request'
 import { PortalResults } from './pages/portal/Results'
+import { PortalShoots } from './pages/portal/Shoots'
 import { PortalWorklog } from './pages/portal/Worklog'
+import { BriefDetailPage, BriefsPage } from './pages/team/Briefs'
 import { ClientDetailPage } from './pages/team/ClientDetail'
 import { ClientsPage } from './pages/team/Clients'
 import { ContentDetailPage } from './pages/team/ContentDetail'
 import { ContentPage } from './pages/team/Content'
 import { DashboardPage } from './pages/team/Dashboard'
 import { FinancePage } from './pages/team/Finance'
+import { LeadsPage } from './pages/team/Leads'
 import { MetricsPage } from './pages/team/Metrics'
 import { MyPayrollPage } from './pages/team/MyPayroll'
 import { PayrollPage } from './pages/team/Payroll'
+import { SchedulePage } from './pages/team/Schedule'
 import { TariffsPage } from './pages/team/Tariffs'
 import { TasksPage } from './pages/team/Tasks'
 import { TeamPage } from './pages/team/Team'
@@ -73,6 +78,10 @@ export default function App() {
               <Route path="clients/:id" element={<Need perm="clients.view"><ClientDetailPage /></Need>} />
               <Route path="content" element={<Need perm="content.view"><ContentPage /></Need>} />
               <Route path="content/:id" element={<Need perm="content.view"><ContentDetailPage /></Need>} />
+              <Route path="schedule" element={<Need perm="content.view"><SchedulePage /></Need>} />
+              <Route path="briefs" element={<Need perm="content.view"><BriefsPage /></Need>} />
+              <Route path="briefs/:id" element={<Need perm="content.view"><BriefDetailPage /></Need>} />
+              <Route path="leads" element={<Need perm="leads.view"><LeadsPage /></Need>} />
               <Route path="tasks" element={<Need perm="tasks.view"><TasksPage /></Need>} />
               <Route path="tasks/:id" element={<Need perm="tasks.view"><TasksPage /></Need>} />
               <Route path="worklog" element={<Need perm="worklog.create"><WorklogPage /></Need>} />
@@ -91,6 +100,8 @@ export default function App() {
               <Route path="approvals" element={<PortalApprovals />} />
               <Route path="approvals/:id" element={<PortalApprovalDetail />} />
               <Route path="worklog" element={<PortalWorklog />} />
+              <Route path="leads" element={<PortalLeads />} />
+              <Route path="shoots" element={<PortalShoots />} />
               <Route path="results" element={<PortalResults />} />
               <Route path="invoices" element={<PortalInvoices />} />
               <Route path="request" element={<PortalRequest />} />

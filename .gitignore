@@ -19,3 +19,4 @@ frontend/dist/
 *.log
 bot/.venv/
 bot/.env
+server_akkauntlar.txt

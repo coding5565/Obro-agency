@@ -8,6 +8,7 @@ from apps.content import views as content
 from apps.content.files import VersionFileView
 from apps.core import views as core
 from apps.finance import views as finance
+from apps.leads import views as leads
 from apps.metrics import views as metrics
 from apps.notifications import views as notifications
 from apps.payroll import views as payroll
@@ -31,6 +32,9 @@ router.register("projects", clients.ProjectViewSet, basename="project")
 router.register("assignments", clients.AssignmentViewSet, basename="assignment")
 router.register("content/items", content.ContentItemViewSet, basename="content-item")
 router.register("content/shoot-days", content.ShootDayViewSet, basename="shoot-day")
+router.register("content/briefs", content.BriefViewSet, basename="brief")
+router.register("leads/sources", leads.LeadSourceViewSet, basename="lead-source")
+router.register("leads/items", leads.LeadViewSet, basename="lead")
 router.register("tasks", tasks.TaskViewSet, basename="task")
 router.register("worklog", worklog.WorkLogViewSet, basename="worklog")
 router.register("metrics/snapshots", metrics.MetricSnapshotViewSet, basename="metric-snapshot")
@@ -68,6 +72,10 @@ portal_urls = [
     path("ads/", portal.AdsView.as_view(), name="portal-ads"),
     path("invoices/", portal.InvoicesView.as_view(), name="portal-invoices"),
     path("requests/", portal.RequestView.as_view(), name="portal-requests"),
+    path("leads/", portal.LeadsView.as_view(), name="portal-leads"),
+    path("leads/<int:pk>/", portal.LeadDetailView.as_view(), name="portal-lead"),
+    path("shoots/", portal.ShootsView.as_view(), name="portal-shoots"),
+    path("shoots/<int:pk>/confirm/", portal.ShootConfirmView.as_view(), name="portal-shoot-confirm"),
 ]
 
 bot_urls = [
@@ -81,6 +89,11 @@ bot_urls = [
     path("projects/", telegram.BotProjectsView.as_view()),
     path("worklog/", telegram.BotWorklogView.as_view()),
     path("approvals/<int:pk>/", telegram.BotApprovalView.as_view()),
+    path("leads/<int:pk>/status/", telegram.BotLeadStatusView.as_view()),
+    path("briefs/", telegram.BotBriefsView.as_view()),
+    path("briefs/<int:pk>/accept/", telegram.BotBriefAcceptView.as_view()),
+    path("shoots/", telegram.BotShootsView.as_view()),
+    path("shoots/<int:pk>/confirm/", telegram.BotShootConfirmView.as_view()),
     path("jobs/daily/", telegram.BotDailyJobView.as_view()),
     path("jobs/evening/", telegram.BotEveningJobView.as_view()),
 ]
@@ -90,6 +103,7 @@ urlpatterns = [
     path("portal/", include(portal_urls)),
     path("bot/", include(bot_urls)),
     path("telegram/link/", telegram.LinkView.as_view(), name="telegram-link"),
+    path("leads/hook/<str:token>/", leads.LeadHookView.as_view(), name="lead-hook"),
     path("dashboard/", core.DashboardView.as_view(), name="dashboard"),
     path("finance/debts/", finance.DebtsView.as_view(), name="debts"),
     path("finance/summary/", finance.MonthSummaryView.as_view(), name="finance-summary"),

@@ -24,7 +24,7 @@ export interface PortalDashboard {
   today?: { time: string; kind_label: string; title: string; quantity: number }[]
   metrics?: { account: string; followers: number; followers_change: number | null; followers_since_start: number; reach: number | null; engagement_rate: string | null; history: { date: string; followers: number }[] }[]
   ads?: { currency: string; spend: string; leads: number; cost_per_lead: string | null }[]
-  shoot_days: { date: string; location: string }[]
+  shoot_days: { id: number; date: string; start_time: string | null; location: string; client_prep: string; client_confirmed_at: string | null }[]
 }
 
 const PACE: Record<string, [Tone, string]> = {
@@ -103,7 +103,7 @@ export function PortalHome() {
               <Card>
                 <Kicker>Jamoa</Kicker>
                 <div>Mas’ul SMM menejer: <b>{p.manager?.full_name ?? '—'}</b></div>
-                {d.shoot_days.length > 0 && <div className="mt-2 text-[13px]">Suratga olish: {d.shoot_days.map((s) => date(s.date)).join(', ')}</div>}
+                {d.shoot_days.length > 0 && <Link to="/portal/shoots" className="mt-2 block text-[13px]">Suratga olish: <b className="num">{d.shoot_days.map((s) => `${date(s.date)} ${s.start_time?.slice(0, 5) ?? ''}`.trim()).join(', ')}</b>{d.shoot_days.some((s) => !s.client_confirmed_at) && <span className="font-semibold text-bronze"> · tasdiqlang →</span>}</Link>}
                 <Link to="/portal/request" className="mt-3 inline-block font-semibold text-bronze">So‘rov yuborish →</Link>
               </Card>
             </div>
