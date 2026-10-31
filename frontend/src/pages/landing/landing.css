@@ -1,6 +1,6 @@
 /* Landing sahifa harakatlari. Panelga ta'sir qilmaydi: hammasi .landing ichida yoki sahifa ochiq paytdagi klassda. */
 html.landing-open {
-  background: var(--color-ink);
+  background: var(--color-paper);
   scroll-behavior: smooth;
 }
 
@@ -10,43 +10,33 @@ html.landing-open {
 }
 
 .landing section[id] {
-  scroll-margin-top: 88px;
+  scroll-margin-top: 92px;
 }
 
 .landing .display {
   font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.04;
+  letter-spacing: -0.03em;
+  line-height: 1.03;
 }
 
 .landing .serif {
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
-.landing .outline-num {
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgb(243 239 230 / 0.28);
+/* Marker chizig'i: och fonda oltin matn o'qilmaydi, shuning uchun oltin so'z orqasida. */
+.landing .mark {
+  background: linear-gradient(transparent 58%, var(--color-gold) 58%, var(--color-gold) 92%, transparent 92%);
+  padding: 0 0.08em;
 }
 
-/* Fondagi nozik nuqtalar to'ri: slaydlardagi qora fonga chuqurlik beradi. */
-.landing .grain {
-  background-image: radial-gradient(rgb(243 239 230 / 0.055) 1px, transparent 1px);
-  background-size: 26px 26px;
-}
-
-.landing .glow {
-  background: radial-gradient(closest-side, rgb(255 194 31 / 0.2), transparent);
-}
-
-/* Sahifaga kirganda paydo bo'lish */
 .landing [data-reveal] {
   opacity: 0;
   transform: translateY(26px);
-  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 750ms cubic-bezier(0.16, 1, 0.3, 1), transform 750ms cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: var(--d, 0ms);
 }
 
@@ -65,94 +55,159 @@ html.landing-open {
   to { opacity: 1; transform: none; }
 }
 
-/* Halqalar */
-.landing .spin {
-  animation: spin 46s linear infinite;
-  transform-origin: center;
+/* Nishon sahnasi: qora nuqta scroll bilan kattalashib butun ekranni egallaydi. */
+.landing .zoom {
+  --p: 0;
+  --e: 0;
+  --dot: 40;
+  --tx: 0;
+  --ty: 0;
+  height: 260vh;
 }
 
-.landing .spin-back {
-  animation: spin 70s linear infinite reverse;
-  transform-origin: center;
+.landing .zoom-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+  --cx: 77%;
+  --cy: 54%;
+  --size: min(76vmin, 680px);
+}
+
+.landing .zoom-copy {
+  opacity: calc(1 - var(--p) * 4);
+  transform: translateY(calc(var(--p) * -110px));
+}
+
+.landing .zoom-rings {
+  position: absolute;
+  left: var(--cx);
+  top: var(--cy);
+  width: var(--size);
+  height: var(--size);
+  opacity: calc(1 - var(--p) * 2);
+  transform: translate(calc(-50% + var(--tx) * 16px), calc(-50% + var(--ty) * 16px)) scale(calc(1 + var(--p) * 2.4));
+}
+
+.landing .zoom-dot {
+  position: absolute;
+  left: var(--cx);
+  top: var(--cy);
+  width: calc(var(--size) * 0.18);
+  height: calc(var(--size) * 0.18);
+  border-radius: 999px;
+  background: var(--color-ink);
+  transform: translate(calc(-50% + var(--tx) * 16px), calc(-50% + var(--ty) * 16px)) scale(calc(1 + var(--e) * var(--dot)));
+  will-change: transform;
+}
+
+.landing .zoom-dark {
+  position: absolute;
+  inset: 0;
+  opacity: calc((var(--p) - 0.62) * 5);
+  transform: translateY(calc((1 - var(--p)) * 50px));
+  pointer-events: none;
+}
+
+.landing .orbit {
+  position: absolute;
+  inset: 0;
+  animation: spin 36s linear infinite;
+  animation-delay: var(--start, 0s);
+}
+
+.landing .orbit-chip {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  translate: -50% -50%;
+  animation: spin 36s linear infinite reverse;
+  animation-delay: var(--start, 0s);
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-.landing .pulse-ring {
-  animation: pulse-ring 5s ease-in-out infinite;
-  transform-origin: center;
-  transform-box: fill-box;
+@media (max-width: 1023px) {
+  .landing .zoom-stage {
+    --cx: 50%;
+    --cy: 89%;
+    --size: min(100vw, 560px);
+  }
 }
 
-@keyframes pulse-ring {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.035); }
+/* Scroll bilan yonadigan matn */
+.landing .burn {
+  --sp: 0;
 }
 
-.landing .float-a {
-  animation: float 6s ease-in-out infinite;
+.landing .burn span {
+  opacity: clamp(0.18, calc(var(--sp) * var(--n) - var(--i) + 1), 1);
 }
 
-.landing .float-b {
-  animation: float 7s ease-in-out -2.5s infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-11px); }
-}
-
-/* Yuguruvchi lenta */
 .landing .marquee {
   display: flex;
   width: max-content;
-  animation: marquee 34s linear infinite;
+  animation: marquee 28s linear infinite;
 }
 
-.landing .marquee:hover {
-  animation-play-state: paused;
+.landing .marquee.back {
+  animation-direction: reverse;
 }
 
 @keyframes marquee {
   to { transform: translateX(-50%); }
 }
 
-/* Telefon kursorga sekin ergashadi (--mx, --my Landing.tsx dan) */
-.landing .tilt {
-  transform: perspective(1200px) rotateY(calc(var(--mx, 0) * 5deg - 7deg)) rotateX(calc(var(--my, 0) * -4deg + 2deg));
-  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+.landing .day-mark {
+  animation: pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--d, 0ms);
 }
 
-.landing .row-hover {
-  transition: background-color 220ms ease, padding-left 220ms ease;
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: none; }
 }
 
 .landing .lift {
-  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), border-color 200ms ease, box-shadow 260ms ease;
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 280ms ease;
+}
+
+.landing .extra-row {
+  transition: padding-left 280ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease;
 }
 
 @media (hover: hover) {
-  .landing .row-hover:hover {
-    background-color: rgb(243 239 230 / 0.045);
-    padding-left: 14px;
-  }
-
   .landing .lift:hover {
     transform: translateY(-6px);
-    border-color: rgb(255 194 31 / 0.45);
+    box-shadow: 0 24px 50px -24px rgb(18 18 16 / 0.28);
+  }
+
+  .landing .extra-row:hover {
+    padding-left: 18px;
+    background-color: var(--color-gold);
   }
 }
 
 .landing a:focus-visible,
-.landing button:focus-visible {
-  outline: 2px solid var(--color-gold);
+.landing button:focus-visible,
+.landing summary:focus-visible {
+  outline: 2px solid var(--color-ink);
   outline-offset: 3px;
 }
 
-.landing .on-gold a:focus-visible {
-  outline-color: var(--color-ink);
+.landing details summary::-webkit-details-marker {
+  display: none;
+}
+
+.landing details[open] .faq-plus {
+  transform: rotate(45deg);
+}
+
+.landing .faq-plus {
+  transition: transform 220ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -167,16 +222,26 @@ html.landing-open {
   }
 
   .landing .hero-in,
-  .landing .spin,
-  .landing .spin-back,
-  .landing .pulse-ring,
-  .landing .float-a,
-  .landing .float-b,
-  .landing .marquee {
+  .landing .orbit,
+  .landing .orbit-chip,
+  .landing .marquee,
+  .landing .day-mark {
     animation: none;
   }
 
-  .landing .tilt {
-    transition: none;
+  .landing .zoom {
+    height: auto;
+  }
+
+  .landing .zoom-stage {
+    position: relative;
+  }
+
+  .landing .zoom-dark {
+    display: none;
+  }
+
+  .landing .burn span {
+    opacity: 1;
   }
 }
