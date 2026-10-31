@@ -294,7 +294,7 @@ export function LandingPage() {
           <div className="mx-auto grid max-w-[1240px] items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.25fr_1fr] lg:gap-8">
             <div>
               <h1>
-                <span className="hero-in display block text-[clamp(84px,17.5vw,196px)] leading-[0.86] tracking-[-0.045em] text-gold">OBRO</span>
+                <span className="hero-in display block text-[clamp(84px,17.5vw,196px)] leading-[0.86] lg:text-[min(13.5vw,196px)] tracking-[-0.045em] text-gold">OBRO</span>
                 <span className="hero-in mt-1 block font-display text-[clamp(38px,8vw,88px)] leading-[1] font-semibold tracking-[-0.01em] text-ivory" style={{ '--d': '90ms' } as CSSProperties}>AGENCY</span>
               </h1>
               <div className="hero-in mono mt-6 text-[10px] tracking-[0.13em] whitespace-nowrap text-ivory/70 uppercase sm:text-[12.5px] sm:tracking-[0.24em]" style={{ '--d': '170ms' } as CSSProperties}>Marketing • Content • Target • Growth</div>
