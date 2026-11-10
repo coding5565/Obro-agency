@@ -229,6 +229,10 @@ APP_LOCATIONS="
     }
     location /static/ { alias $ROOT/static/; expires 7d; }
     location /assets/ { expires 30d; add_header Cache-Control \"public, immutable\"; try_files \$uri =404; }
+    # Telefon ilovasi: manifest o'z turi bilan, service worker esa keshsiz (yangilanish darhol yetib borsin).
+    location = /manifest.webmanifest { types { } default_type application/manifest+json; add_header Cache-Control \"no-cache\"; }
+    location = /sw.js { add_header Cache-Control \"no-cache\"; }
+    location = /index.html { add_header Cache-Control \"no-cache\"; }
     location / { try_files \$uri /index.html; }"
 ACME="location /.well-known/acme-challenge/ { root /var/www/letsencrypt; }"
 CERT_DIR="/etc/letsencrypt/live/${CERT_DOMAIN:-none}"
