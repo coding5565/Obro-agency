@@ -89,7 +89,7 @@ function LeadList() {
   const [status, setStatus] = useState(params.get('status') ?? '')
   const [search, setSearch] = useState('')
   const [view, setView] = useState<'table' | 'board'>('table')
-  const [creating, setCreating] = useState(false)
+  const [creating, setCreating] = useState(params.get('new') === '1')
   const [exportError, setExportError] = useState<unknown>(null)
   const openId = params.get('lead')
   const list = useQuery({

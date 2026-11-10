@@ -69,7 +69,7 @@ export function LoginPage({ door = 'client' }: { door?: keyof typeof DOORS }) {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+    <div className="grid min-h-screen pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] lg:grid-cols-[1.1fr_1fr]">
       <BrandPanel />
       <div className="flex items-center justify-center p-6">
         <form onSubmit={submit} className="w-full max-w-[360px] animate-enter space-y-5">

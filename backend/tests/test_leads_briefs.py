@@ -364,3 +364,33 @@ class TestDashboardAlerts:
         hook(source.token, {"id": "1", "phone": "901234567"})
         alerts = api_for(team["video"]).get("/api/v1/dashboard/").data["alerts"]
         assert not any("lid" in a["title"] for a in alerts)
+
+
+class TestTodayList:
+    def test_creator_and_manager_see_their_own_todo(self, rahbar, project, team):
+        from apps.tasks import models as tm
+
+        Brief.objects.create(project=project, title="TZ", assignee=team["video"], status=Brief.SENT)
+        Brief.objects.create(project=project, title="Tekshir", assignee=team["video"], status=Brief.REVIEW)
+        tm.Task.objects.create(project=project, title="Eski", assignee=team["video"],
+                               due_date=timezone.localdate() - timedelta(days=1))
+        creator = [a["title"] for a in api_for(team["video"]).get("/api/v1/dashboard/").data["alerts"]]
+        assert any("Yangi TZ" in t for t in creator) and any("Muddati o‘tgan vazifalar" in t for t in creator)
+        assert not any("Tekshirishingiz" in t for t in creator)
+        smm = api_for(team["smm"]).get("/api/v1/dashboard/").data["alerts"]
+        review = next(a for a in smm if "Tekshirishingiz" in a["title"])
+        assert review["count"] == 1 and review["link"] == "/app/briefs?tab=review"
+        assert smm == sorted(smm, key=lambda a: {"danger": 0, "warn": 1, "info": 2}[a["level"]])
+
+
+    def test_client_page_lists_work_from_all_client_projects(self, rahbar, project, team):
+        from apps.clients.models import Project
+
+        second = Project.objects.create(client=project.client, tariff_version=project.tariff_version,
+                                        price=project.price, currency=project.currency,
+                                        start_date=project.start_date + timedelta(days=31))
+        other = make_project("Boshqa mijoz", project.tariff_version.tariff.code)
+        for p in (project, second, other):
+            Brief.objects.create(project=p, title=f"TZ {p.pk}", assignee=team["video"], status=Brief.SENT)
+        rows = api_for(rahbar).get("/api/v1/content/briefs/", {"project__client": project.client_id}).data["results"]
+        assert {r["project"] for r in rows} == {project.pk, second.pk}

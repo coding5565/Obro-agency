@@ -10,7 +10,7 @@ interface Dashboard {
   my_tasks: { today: number; overdue: number; open: number }
   content: { in_client_review: number; in_internal_review: number; changes_requested: number; published_this_month: number }
   active_projects: number
-  alerts: { level: 'danger' | 'warn' | 'info'; title: string; link: string }[]
+  alerts: { level: 'danger' | 'warn' | 'info'; title: string; link: string; count: number | null }[]
   worklog_pending?: number
   finance?: { month_income_uzs: string; debt: Record<string, string>; overdue_invoices: number; draft_invoices: number }
   clients?: { active: number; leads: number; projects_by_tariff: Record<string, number> }
@@ -26,17 +26,22 @@ export function DashboardPage() {
   return (
     <>
       <PageHeader title="Assalomu alaykum," accent={`${user?.full_name.split(' ')[0]}!`} subtitle={`${d.active_projects} ta faol loyiha · bugun nima qilamiz?`} />
-      {d.alerts.length > 0 && (
-        <div className="mb-4 grid gap-2 md:grid-cols-2">
-          {d.alerts.map((a) => (
-            <Link key={a.title} to={a.link} className="flex items-center gap-2.5 rounded-xl border border-line-soft bg-white px-3.5 py-3 font-semibold shadow-card hover:border-line">
-              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${a.level === 'danger' ? 'bg-bad' : a.level === 'warn' ? 'bg-warn' : 'bg-gold'}`} />
-              <span className="min-w-0 flex-1">{a.title}</span>
-              <span className="text-bronze">→</span>
-            </Link>
-          ))}
-        </div>
-      )}
+      <Card className="mb-4">
+        <Kicker>Bugun nima qilish kerak</Kicker>
+        {d.alerts.length === 0 ? (
+          <div className="flex items-center gap-3 py-3"><span className="grid h-9 w-9 place-items-center rounded-full bg-ok-soft text-ok">✓</span><span className="font-semibold">Hammasi joyida. Shoshilinch ish yo‘q.</span></div>
+        ) : (
+          <div className="divide-y divide-line-soft">
+            {d.alerts.map((a) => (
+              <Link key={a.title} to={a.link} className="flex min-h-12 items-center gap-3 py-2.5 hover:bg-ivory/50">
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${a.level === 'danger' ? 'bg-bad' : a.level === 'warn' ? 'bg-warn' : 'bg-gold'}`} />
+                <span className="min-w-0 flex-1 font-semibold">{a.title}</span>
+                <span className="text-bronze">→</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Card>
       {d.finance && d.clients && (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Stat label="Shu oy tushum" value={money(Math.round(Number(d.finance.month_income_uzs)), 'UZS')} />

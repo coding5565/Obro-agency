@@ -110,7 +110,7 @@ class LeadSourceViewSet(viewsets.ModelViewSet):
 class LeadViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [ObroPermission]
     required_perms = {"read": access.LEADS_VIEW, "write": access.LEADS_MANAGE}
-    filterset_fields = ["project", "status", "assigned_to", "source"]
+    filterset_fields = ["project", "project__client", "status", "assigned_to", "source"]
     search_fields = ["full_name", "phone", "form_name", "campaign_name"]
 
     def get_queryset(self):

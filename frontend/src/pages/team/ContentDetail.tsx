@@ -23,6 +23,7 @@ export function ContentDetailPage() {
   const queryClient = useQueryClient()
   const item = useQuery({ queryKey: ['content-item', id], queryFn: () => get<ContentItem>(`/content/items/${id}/`) })
   const tasks = useQuery({ queryKey: ['tasks', { content: id }], queryFn: () => get<Page<Task>>('/tasks/', { content_item: id }) })
+  const briefs = useQuery({ queryKey: ['briefs', { content: id }], queryFn: () => get<Page<{ id: number; title: string; assignee_name: string; status: string; status_label: string }>>('/content/briefs/', { content_item: id }) })
   const [uploading, setUploading] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [comment, setComment] = useState('')
@@ -102,6 +103,19 @@ export function ContentDetailPage() {
               </div>
             </Card>
           )}
+          <Card>
+            <Kicker>TZ</Kicker>
+            {briefs.data?.results.length === 0 && <div className="text-[13px] text-muted">Bu kontentga TZ yozilmagan.</div>}
+            {briefs.data?.results.map((b) => (
+              <Link key={b.id} to={`/app/briefs/${b.id}`} className="block border-b border-line-soft py-2.5 last:border-0">
+                <div className="text-[13px] leading-snug font-semibold">{b.title}</div>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <span className="truncate text-[12px] text-muted">{b.assignee_name}</span>
+                  <StatusBadge status={b.status} label={b.status_label} />
+                </div>
+              </Link>
+            ))}
+          </Card>
           <Card>
             <Kicker>Vazifalar</Kicker>
             {tasks.data?.results.map((t) => (

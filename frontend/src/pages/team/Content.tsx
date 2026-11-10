@@ -6,7 +6,7 @@ import { Link, useSearchParams } from 'react-router'
 import { get, post } from '../../shared/api/client'
 import type { ContentItem, Page, Project } from '../../shared/api/types'
 import { useAuth } from '../../shared/auth/AuthProvider'
-import { monthKey, monthLabel, shiftMonth } from '../../shared/lib/format'
+import { monthKey, monthLabel, shiftMonth, today } from '../../shared/lib/format'
 import { Button, Card, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, StatusBadge, Tabs, Textarea } from '../../shared/ui'
 
 const WEEKDAYS = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya']
@@ -23,8 +23,8 @@ export function ContentPage() {
   const projects = useActiveProjects()
   const projectId = params.get('project') ?? ''
   const month = params.get('month') ?? monthKey()
-  const [view, setView] = useState<'calendar' | 'board'>('calendar')
-  const [creating, setCreating] = useState<string | null>(null)
+  const [view, setView] = useState<'calendar' | 'board'>(params.get('view') === 'board' ? 'board' : 'calendar')
+  const [creating, setCreating] = useState<string | null>(params.get('new') === '1' ? today() : null)
 
   useEffect(() => {
     if (!projectId && projects.data?.results[0]) setParams({ project: String(projects.data.results[0].id), month }, { replace: true })
@@ -80,7 +80,7 @@ export function ContentPage() {
           })}
         </div>
       )}
-      {creating !== null && <CreateItem projectId={Number(projectId)} defaultDate={creating} onClose={() => setCreating(null)} />}
+      {creating !== null && !!projectId && <CreateItem projectId={Number(projectId)} defaultDate={creating} onClose={() => setCreating(null)} />}
     </>
   )
 }

@@ -2,12 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useParams } from 'react-router'
+import { useParams, useSearchParams } from 'react-router'
 import { get, patch, post } from '../../shared/api/client'
 import type { Client, Invite, Page, Position, Project, StaffUser, Tariff } from '../../shared/api/types'
 import { useAuth } from '../../shared/auth/AuthProvider'
 import { date, money, pct, today } from '../../shared/lib/format'
-import { Badge, Button, Card, ErrorBox, Field, Input, Kicker, Modal, PageHeader, Select, Spinner, StatusBadge } from '../../shared/ui'
+import { Badge, Button, Card, ErrorBox, Field, Input, Kicker, Modal, PageHeader, Select, Spinner, StatusBadge, Tabs } from '../../shared/ui'
+import { ClientWork } from './ClientWork'
 import { CLIENT_STATUSES } from './Clients'
 
 export function ClientDetailPage() {
@@ -16,6 +17,7 @@ export function ClientDetailPage() {
   const queryClient = useQueryClient()
   const client = useQuery({ queryKey: ['client', id], queryFn: () => get<Client>(`/clients/${id}/`) })
   const projects = useQuery({ queryKey: ['projects', { client: id }], queryFn: () => get<Page<Project>>('/projects/', { client: id }) })
+  const [params, setParams] = useSearchParams()
   const [modal, setModal] = useState<null | 'project' | 'contact' | 'social' | 'invite' | { assign: Project }>(null)
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['client', id] })
@@ -29,6 +31,8 @@ export function ClientDetailPage() {
   const c = client.data
   if (!c) return <ErrorBox error={client.error} />
   const manage = can('clients.manage')
+  const active = projects.data?.results.filter((p) => p.status === 'active').sort((x, y) => y.start_date.localeCompare(x.start_date))[0]
+  const tab = params.get('tab') === 'info' ? 'info' : 'work'
 
   return (
     <>
@@ -44,6 +48,11 @@ export function ClientDetailPage() {
           </>
         )}
       />
+      {active && (
+        <Tabs value={tab} onChange={(next) => setParams({ tab: next }, { replace: true })} items={[['work', 'Ish jarayoni'], ['info', 'Ma’lumot va jamoa']]} />
+      )}
+      {active && tab === 'work' && <ClientWork projectId={active.id} clientId={c.id} />}
+      {(!active || tab === 'info') && (
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between">
@@ -94,6 +103,7 @@ export function ClientDetailPage() {
           {c.notes && <Card><Kicker>Ichki izoh</Kicker><div className="text-[13px] whitespace-pre-line">{c.notes}</div></Card>}
         </div>
       </div>
+      )}
       {modal === 'project' && <ProjectForm clientId={c.id} onClose={() => setModal(null)} onSaved={refresh} />}
       {modal === 'contact' && <ContactForm clientId={c.id} onClose={() => setModal(null)} onSaved={refresh} />}
       {modal === 'social' && <SocialForm clientId={c.id} onClose={() => setModal(null)} onSaved={refresh} />}

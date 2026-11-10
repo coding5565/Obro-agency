@@ -25,7 +25,7 @@ export function TelegramLoginPage() {
   }, [token, acceptSession, navigate])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-ink p-6 text-center text-ivory">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-ink p-6 pt-[calc(env(safe-area-inset-top)+24px)] text-center text-ivory">
       <Logo size="md" />
       {error ? (
         <div className="w-full max-w-sm space-y-4">

@@ -14,10 +14,12 @@ from apps.clients.selectors import visible_projects
 from apps.content import models as cm
 from apps.content.shoots import when_text
 from apps.core.models import AuditLog
-from apps.finance.models import Invoice, Payment
+from apps.finance.models import Expense, Invoice, Payment
 from apps.leads import models as lead_models
 from apps.leads.models import Lead
 from apps.leads.services import counted
+from apps.payroll.models import PayrollSheet
+from apps.payroll.services import sheet_rows
 from apps.tasks import models as tm
 from apps.worklog import models as wl
 from common import access
@@ -113,32 +115,82 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 def _alerts(user, projects, today):
-    """Bosh ekrandagi ogohlantirishlar: bugun e'tibor talab qiladigan narsalar."""
-    alerts = []
+    """«Bugun» ro'yxati: rolga qarab nima qilish kerakligi. Har band bosilsa, kerakli sahifa ochiladi."""
+    items = []
+
+    def add(level, title, link, count=None):
+        items.append({"level": level, "title": title, "link": link, "count": count})
+
+    tasks = tm.Task.objects.filter(project__in=projects, assignee=user, status__in=[tm.TODO, tm.IN_PROGRESS])
+    late_tasks = tasks.filter(due_date__lt=today).count()
+    if late_tasks:
+        add("danger", f"Muddati o‘tgan vazifalar: {late_tasks} ta", "/app/tasks", late_tasks)
+    today_tasks = tasks.filter(due_date=today).count()
+    if today_tasks:
+        add("warn", f"Bugungi vazifalar: {today_tasks} ta", "/app/tasks", today_tasks)
+
     tomorrow = today + timedelta(days=1)
     shoots = cm.ShootDay.objects.filter(project__in=projects, status="planned", date__in=[today, tomorrow])
     if not user.has_obro_perm(access.CONTENT_MANAGE):
         shoots = shoots.filter(participants=user)
     for shoot in shoots.select_related("project__client").distinct():
         day = "Bugun" if shoot.date == today else "Ertaga"
-        alerts.append({"level": "warn" if shoot.date == today else "info", "link": "/app/schedule",
-                       "title": f"{day} syomka: {shoot.project.client.name} · {when_text(shoot)}"})
+        level = "warn" if shoot.date == today else "info"
+        add(level, f"{day} syomka: {shoot.project.client.name} · {when_text(shoot)}", "/app/schedule")
+
     if user.has_obro_perm(access.CONTENT_VIEW):
-        mine = cm.Brief.objects.filter(project__in=projects, status__in=cm.Brief.OPEN)
-        if not user.has_obro_perm(access.CONTENT_MANAGE):
-            mine = mine.filter(assignee=user)
-        late = mine.filter(deadline__lt=timezone.now()).count()
+        manage = user.has_obro_perm(access.CONTENT_MANAGE)
+        briefs = cm.Brief.objects.filter(project__in=projects, status__in=cm.Brief.OPEN)
+        if not manage:
+            briefs = briefs.filter(assignee=user)
+        late = briefs.filter(deadline__lt=timezone.now()).count()
         if late:
-            alerts.append({"level": "danger", "title": f"Muddati o‘tgan TZ: {late} ta", "link": "/app/briefs"})
-        unaccepted = mine.filter(status=cm.Brief.SENT).count()
+            add("danger", f"Muddati o‘tgan TZ: {late} ta", "/app/briefs", late)
+        unaccepted = briefs.filter(status=cm.Brief.SENT).count()
         if unaccepted:
-            alerts.append({"level": "info", "title": f"Qabul qilinmagan TZ: {unaccepted} ta", "link": "/app/briefs"})
+            title = "Qabul qilinmagan TZ" if manage else "Yangi TZ: qabul qiling"
+            add("info", f"{title}: {unaccepted} ta", "/app/briefs", unaccepted)
+        if manage:
+            review = cm.Brief.objects.filter(project__in=projects, status=cm.Brief.REVIEW).count()
+            if review:
+                add("warn", f"Tekshirishingiz kerak bo‘lgan TZ: {review} ta", "/app/briefs?tab=review", review)
+            content = cm.ContentItem.objects.filter(project__in=projects)
+            internal = content.filter(status=cm.INTERNAL_REVIEW).count()
+            if internal:
+                add("warn", f"Ichki tekshiruvdagi kontent: {internal} ta", "/app/content?view=board", internal)
+            changes = content.filter(status=cm.CHANGES).count()
+            if changes:
+                add("danger", f"Mijoz tuzatish so‘ragan kontent: {changes} ta", "/app/content?view=board", changes)
+
+    if user.has_obro_perm(access.WORKLOG_APPROVE):
+        pending = wl.WorkLogEntry.objects.filter(project__in=projects, status=wl.SUBMITTED).count()
+        if pending:
+            add("info", f"Tasdiqlanadigan ish jurnali: {pending} ta", "/app/worklog", pending)
+
     if user.has_obro_perm(access.LEADS_VIEW):
         waiting = counted(Lead.objects.filter(project__in=projects, status=lead_models.NEW)).count()
         if waiting:
-            alerts.append({"level": "danger", "title": f"Javob kutayotgan lidlar: {waiting} ta",
-                           "link": "/app/leads?status=new"})
-    return alerts
+            add("danger", f"Javob kutayotgan lidlar: {waiting} ta", "/app/leads?status=new", waiting)
+
+    if user.has_obro_perm(access.FINANCE_MANAGE):
+        drafts = Invoice.objects.filter(issued_at__isnull=True, cancelled_at__isnull=True).count()
+        if drafts:
+            add("info", f"Chiqarilmagan hisob-faktura: {drafts} ta", "/app/finance?tab=invoices", drafts)
+        overdue = sum(1 for inv in Invoice.objects.filter(issued_at__isnull=False, cancelled_at__isnull=True,
+                                                           due_date__lt=today) if inv.outstanding > 0)
+        if overdue:
+            add("danger", f"To‘lov muddati o‘tgan: {overdue} ta", "/app/finance?tab=debts", overdue)
+        requests = Expense.objects.filter(status=Expense.REQUESTED, cancelled_at__isnull=True).count()
+        if requests:
+            add("warn", f"Xarajat so‘rovlari: {requests} ta", "/app/finance?tab=expenses", requests)
+    if user.has_obro_perm(access.PAYROLL_MANAGE) and today.day >= 3:
+        last = today.replace(day=1) - timedelta(days=1)
+        sheet = PayrollSheet.objects.filter(year=last.year, month=last.month).first()
+        if (sheet is None or sheet.status == PayrollSheet.DRAFT) and sheet_rows(last.year, last.month):
+            add("warn", f"{last:%m.%Y} maosh vedomosti tasdiqlanmagan", "/app/payroll")
+
+    order = {"danger": 0, "warn": 1, "info": 2}
+    return sorted(items, key=lambda item: order[item["level"]])
 
 
 class DashboardView(APIView):

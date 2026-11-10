@@ -47,7 +47,7 @@ export function BriefsPage() {
   const { can, user } = useAuth()
   const [params] = useSearchParams()
   const manage = can('content.manage')
-  const [filter, setFilter] = useState('open')
+  const [filter, setFilter] = useState(params.get('tab') ?? 'open')
   const [creating, setCreating] = useState(params.get('new') === '1')
   const list = useQuery({ queryKey: ['briefs'], queryFn: () => get<Page<Brief>>('/content/briefs/', { page_size: 300 }) })
   const rows = (list.data?.results ?? []).filter((b) => (filter === 'open' ? OPEN.includes(b.status) : b.status === filter))

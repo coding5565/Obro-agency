@@ -19,15 +19,15 @@ export function PortalLayout() {
   const item = (feature: string, nav: NavItem): NavItem => (features.has(feature) ? nav : { ...nav, locked: LOCKED })
   const nav: NavItem[] = [
     { to: '/portal', label: 'Bosh sahifa', icon: <Home size={17} />, end: true },
-    item('calendar', { to: '/portal/calendar', label: 'Kalendar', icon: <CalendarDays size={17} /> }),
-    item('approvals', { to: '/portal/approvals', label: 'Tasdiqlash', icon: <CheckCircle2 size={17} />, badge: approvals.data?.length }),
-    { to: '/portal/shoots', label: 'Syomka kunlari', icon: <Camera size={17} /> },
-    item('leads', { to: '/portal/leads', label: 'Lidlar', icon: <Magnet size={17} /> }),
-    item('worklog', { to: '/portal/worklog', label: 'Bugun nima qilindi', icon: <NotebookPen size={17} /> }),
-    item('metrics', { to: '/portal/results', label: 'Natijalar', icon: <BarChart3 size={17} /> }),
+    item('calendar', { section: 'Ish', to: '/portal/calendar', label: 'Kalendar', icon: <CalendarDays size={17} /> }),
+    item('approvals', { section: 'Ish', to: '/portal/approvals', label: 'Tasdiqlash', icon: <CheckCircle2 size={17} />, badge: approvals.data?.length }),
+    { section: 'Ish', to: '/portal/shoots', label: 'Syomka kunlari', icon: <Camera size={17} /> },
+    item('worklog', { section: 'Ish', to: '/portal/worklog', label: 'Bugun nima qilindi', icon: <NotebookPen size={17} /> }),
+    item('metrics', { section: 'Natija', to: '/portal/results', label: 'Natijalar', icon: <BarChart3 size={17} /> }),
+    item('leads', { section: 'Natija', to: '/portal/leads', label: 'Lidlar', icon: <Magnet size={17} /> }),
   ]
-  if (access?.can_see_payments) nav.push(item('invoices', { to: '/portal/invoices', label: 'To‘lovlar', icon: <Receipt size={17} /> }))
-  nav.push(item('requests', { to: '/portal/request', label: 'So‘rov yuborish', icon: <MessageSquarePlus size={17} /> }))
+  if (access?.can_see_payments) nav.push(item('invoices', { section: 'Hisob', to: '/portal/invoices', label: 'To‘lovlar', icon: <Receipt size={17} /> }))
+  nav.push(item('requests', { section: 'Hisob', to: '/portal/request', label: 'So‘rov yuborish', icon: <MessageSquarePlus size={17} /> }))
   return (
     <Shell nav={nav} footer={
       <div className="rounded-xl bg-ink-2 px-3 py-2.5">

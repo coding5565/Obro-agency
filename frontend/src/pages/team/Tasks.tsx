@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { get, post } from '../../shared/api/client'
 import type { Page, StaffUser, Task } from '../../shared/api/types'
 import { useAuth } from '../../shared/auth/AuthProvider'
@@ -14,7 +14,8 @@ export function TasksPage() {
   const queryClient = useQueryClient()
   const [scope, setScope] = useState<'mine' | 'all'>('mine')
   const [status, setStatus] = useState('open')
-  const [creating, setCreating] = useState(false)
+  const [params] = useSearchParams()
+  const [creating, setCreating] = useState(params.get('new') === '1')
   const list = useQuery({
     queryKey: ['tasks', scope, status],
     queryFn: () => get<Page<Task>>('/tasks/', {
@@ -57,16 +58,16 @@ export function TasksPage() {
           ))}
         </Table>
       )}
-      {creating && <CreateTask onClose={() => setCreating(false)} />}
+      {creating && <CreateTask project={params.get('project') ?? ''} onClose={() => setCreating(false)} />}
     </>
   )
 }
 
-function CreateTask({ onClose }: { onClose: () => void }) {
+function CreateTask({ onClose, project: initialProject = '' }: { onClose: () => void; project?: string }) {
   const queryClient = useQueryClient()
   const projects = useActiveProjects()
   const users = useQuery({ queryKey: ['users', 'staff'], queryFn: () => get<Page<StaffUser>>('/users/', { staff: 1, page_size: 200 }), retry: false })
-  const [form, setForm] = useState({ project: '', title: '', description: '', assignee: '', due_date: today(), priority: 'normal' })
+  const [form, setForm] = useState({ project: initialProject, title: '', description: '', assignee: '', due_date: today(), priority: 'normal' })
   const project = projects.data?.results.find((p) => String(p.id) === form.project)
   // Rahbar barcha xodimlarni ko'radi, SMM menejer — loyihaga biriktirilganlarni.
   const people = users.data?.results.map((u) => ({ id: u.id, name: u.full_name }))

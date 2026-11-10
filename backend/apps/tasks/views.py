@@ -40,7 +40,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     permission_classes = [ObroPermission]
     required_perms = {"read": access.TASKS_VIEW, "write": access.TASKS_MANAGE, "my": access.TASKS_VIEW,
                       "set_status": access.TASKS_VIEW}
-    filterset_fields = ["project", "assignee", "status", "content_item"]
+    filterset_fields = ["project", "project__client", "assignee", "status", "content_item"]
     search_fields = ["title"]
     http_method_names = ["get", "post", "patch", "head", "options"]
 

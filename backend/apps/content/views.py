@@ -26,7 +26,7 @@ class ContentItemViewSet(viewsets.ModelViewSet):
         "read": access.CONTENT_VIEW, "write": access.CONTENT_MANAGE,
         "versions": access.CONTENT_UPLOAD, "comments": access.CONTENT_VIEW,
     }
-    filterset_fields = ["project", "status", "kind"]
+    filterset_fields = ["project", "project__client", "status", "kind"]
     search_fields = ["title"]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     http_method_names = ["get", "post", "patch", "head", "options"]
@@ -91,7 +91,7 @@ class ShootDayViewSet(viewsets.ModelViewSet):
     serializer_class = ShootDaySerializer
     permission_classes = [ObroPermission]
     required_perms = {"read": access.CONTENT_VIEW, "write": access.CONTENT_MANAGE, "complete": access.CONTENT_UPLOAD}
-    filterset_fields = ["project", "status"]
+    filterset_fields = ["project", "project__client", "status"]
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
@@ -151,7 +151,7 @@ class BriefViewSet(viewsets.ModelViewSet):
         "read": access.CONTENT_VIEW, "write": access.CONTENT_MANAGE,
         "accept": access.CONTENT_VIEW, "submit": access.CONTENT_VIEW, "shot": access.CONTENT_VIEW,
     }
-    filterset_fields = ["project", "status", "assignee", "content_item", "shoot_day"]
+    filterset_fields = ["project", "project__client", "status", "assignee", "content_item", "shoot_day"]
     search_fields = ["title"]
     http_method_names = ["get", "post", "patch", "head", "options"]
 

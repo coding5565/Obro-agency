@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { get, patch, post } from '../../shared/api/client'
 import type { Page } from '../../shared/api/types'
 import { useAuth } from '../../shared/auth/AuthProvider'
@@ -49,7 +49,8 @@ export function SchedulePage() {
   const { can } = useAuth()
   const manage = can('content.manage')
   const [month, setMonth] = useState(monthKey())
-  const [creating, setCreating] = useState<string | null>(null)
+  const [params] = useSearchParams()
+  const [creating, setCreating] = useState<string | null>(params.get('new') === '1' ? today() : null)
   const [openId, setOpenId] = useState<number | null>(null)
   const { cells, first, last } = useMemo(() => monthCells(month), [month])
   const shoots = useQuery({
@@ -123,17 +124,17 @@ export function SchedulePage() {
           </Card>
         </div>
       )}
-      {creating && <ShootForm day={creating} onClose={() => setCreating(null)} />}
+      {creating && <ShootForm day={creating} projectId={params.get('project') ?? ''} onClose={() => setCreating(null)} />}
       {open && <ShootModal shoot={open} onClose={() => setOpenId(null)} />}
     </>
   )
 }
 
-function ShootForm({ day, shoot, onClose }: { day?: string; shoot?: Shoot; onClose: () => void }) {
+function ShootForm({ day, shoot, projectId = '', onClose }: { day?: string; shoot?: Shoot; projectId?: string; onClose: () => void }) {
   const queryClient = useQueryClient()
   const projects = useActiveProjects()
   const [form, setForm] = useState({
-    project: shoot ? String(shoot.project) : '',
+    project: shoot ? String(shoot.project) : projectId,
     date: shoot?.date ?? day ?? today(),
     start_time: hm(shoot?.start_time ?? null),
     end_time: hm(shoot?.end_time ?? null),

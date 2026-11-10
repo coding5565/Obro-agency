@@ -8,6 +8,18 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.10',
+    date: '2026-11-10',
+    title: 'Sodda va bog‘langan panel',
+    changes: [
+      { area: 'Bosh sahifa', items: ['«Bugun nima qilish kerak» ro‘yxati: har kimga o‘z roli bo‘yicha (kechikkan vazifa, yangi TZ, tekshiriladigan kontent, syomka, yangi lidlar, to‘lovlar)', 'Har bir qator bosilsa, kerakli joy darhol ochiladi'] },
+      { area: 'Menyu', items: ['Bo‘limlar uch guruhda: Ish, Men, Boshqaruv', 'Tepada «+ Qo‘shish» tugmasi: vazifa, TZ, syomka, kontent, lid bir bosishda'] },
+      { area: 'Mijoz sahifasi', items: ['«Ish jarayoni»: shu mijozning kontenti, TZ, syomkalari, vazifalari, lidlari va to‘lovlari bir joyda', 'Har bo‘limda «+» tugmasi: mijoz oldindan tanlangan holda yangi ish ochiladi'] },
+      { area: 'Kontent', items: ['Kontent sahifasida shu kontentga yozilgan TZ’lar ham ko‘rinadi'] },
+      { area: 'Telefon ilovasi', items: ['iPhone’da tepadagi menyu endi soat va batareya ostiga kirib ketmaydi', 'Menyu, oynalar va pastki qism telefon chetlariga to‘g‘ri moslandi'] },
+    ],
+  },
+  {
     version: '1.9',
     date: '2026-11-10',
     title: 'Telefon ilovasi',

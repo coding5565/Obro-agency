@@ -112,7 +112,7 @@ function Hero({ zoom, onPointer }: { zoom: React.RefObject<HTMLElement | null>; 
         </div>
         <div className="zoom-dot" aria-hidden />
 
-        <div className="zoom-copy relative z-10 mx-auto flex h-full max-w-[1240px] flex-col px-5 pt-[92px] sm:px-8 sm:pt-[112px] lg:justify-center lg:pt-16">
+        <div className="zoom-copy relative z-10 mx-auto flex h-full max-w-[1240px] flex-col px-5 pt-[calc(env(safe-area-inset-top)+92px)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+112px)] lg:justify-center lg:pt-16">
           <div className="max-w-[640px]">
             <div className="hero-in mono mb-4 text-[11px] tracking-[0.16em] uppercase sm:text-[12px]">SMM agentlik · Farg‘ona</div>
             <h1 className="hero-in display text-[clamp(46px,13.2vw,104px)]" style={{ '--d': '70ms' } as CSSProperties}>
@@ -555,7 +555,7 @@ export function LandingPage() {
 
   return (
     <div ref={root} className="landing min-h-screen bg-paper pb-[76px] text-ink lg:pb-0">
-      <header className="fixed inset-x-2.5 top-2.5 z-40 mx-auto max-w-[1240px] rounded-[22px] bg-white/90 shadow-[0_10px_30px_-14px_rgb(18_18_16/0.35)] backdrop-blur-xl sm:inset-x-5 sm:top-4">
+      <header className="fixed inset-x-2.5 top-[calc(env(safe-area-inset-top)+10px)] z-40 mx-auto max-w-[1240px] rounded-[22px] bg-white/90 shadow-[0_10px_30px_-14px_rgb(18_18_16/0.35)] backdrop-blur-xl sm:inset-x-5 sm:top-[calc(env(safe-area-inset-top)+16px)]">
         <div className="flex h-[60px] items-center justify-between gap-2 pr-2 pl-3.5 sm:pl-5">
           <a href="#bosh" aria-label="OBRO AGENCY, bosh sahifa" onClick={() => setMenu(false)} className="flex min-h-11 items-center gap-2 font-display text-[12.5px] font-bold whitespace-nowrap sm:text-[14px]">
             <TargetMark size={24} color="#121210" />OBRO AGENCY
