@@ -42,7 +42,7 @@ ACTION_LABELS = {
     "payroll.approve": "Vedomostni tasdiqladi", "payroll.payout": "Maosh to‘ladi",
     "payroll.payout_cancel": "Maosh to‘lovini bekor qildi", "payroll_adjustment.create": "Avans yoki bonus kiritdi",
     "payroll_adjustment.delete": "Tuzatishni o‘chirdi", "payroll_rule.create": "Foiz qoidasi qo‘shdi",
-    "user.update": "Xodimni o‘zgartirdi", "user.activate": "Xodimni faollashtirdi",
+    "user.update": "Xodimni o‘zgartirdi", "user.profile": "O‘z profilini o‘zgartirdi", "user.activate": "Xodimni faollashtirdi",
     "user.deactivate": "Xodimni o‘chirdi", "invite.create": "Taklif yaratdi",
     "tariff_version.create": "Tarif versiyasi qo‘shdi", "tariff_version.update": "Tarif versiyasini o‘zgartirdi",
 }

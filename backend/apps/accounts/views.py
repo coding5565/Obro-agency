@@ -99,6 +99,14 @@ class MeView(APIView):
     def get(self, request):
         return Response(s.MeSerializer(request.user).data)
 
+    def patch(self, request):
+        before = audit.snapshot(request.user, fields=["full_name", "email"])
+        serializer = s.ProfileSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        audit.log(user, "user.profile", user, before=before, after=audit.snapshot(user, fields=["full_name", "email"]))
+        return Response(s.MeSerializer(user).data)
+
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]

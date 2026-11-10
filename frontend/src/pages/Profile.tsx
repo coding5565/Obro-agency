@@ -14,10 +14,34 @@ export function ProfilePage() {
     <>
       <PageHeader title="Profil" subtitle={`${user?.full_name} · ${user?.role_label} · ${user?.phone}`} />
       <div className="grid gap-4 lg:grid-cols-2">
-        <TelegramCard />
+        <InfoCard />
         <PasswordCard />
+        <TelegramCard />
       </div>
     </>
+  )
+}
+
+function InfoCard() {
+  const { user, refreshUser } = useAuth()
+  const [form, setForm] = useState({ full_name: user?.full_name ?? '', email: user?.email ?? '' })
+  const save = useMutation({
+    mutationFn: () => api('/auth/me/', { method: 'PATCH', body: form }),
+    onSuccess: () => refreshUser(),
+  })
+  const changed = form.full_name !== user?.full_name || form.email !== (user?.email ?? '')
+  return (
+    <Card>
+      <Kicker>Ma’lumotlarim</Kicker>
+      <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} className="space-y-3">
+        <Field label="Ism familiya"><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} autoComplete="name" required /></Field>
+        <Field label="Email" hint="Ixtiyoriy"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} autoComplete="email" /></Field>
+        <Field label="Telefon (login)" hint="Login o‘zgarmaydi. Kerak bo‘lsa, rahbarga yozing."><Input value={user?.phone ?? ''} disabled /></Field>
+        <ErrorBox error={save.error} />
+        {save.isSuccess && !changed && <p className="text-[13px] font-semibold text-ok">Saqlandi</p>}
+        <Button disabled={!changed || save.isPending}>Saqlash</Button>
+      </form>
+    </Card>
   )
 }
 

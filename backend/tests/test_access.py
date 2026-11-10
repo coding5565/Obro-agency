@@ -86,6 +86,17 @@ def test_deactivated_user_loses_access(rahbar, team):
     assert api_for(team["smm"]).get("/api/v1/tasks/").status_code in (401, 403)
 
 
+def test_own_profile_but_not_login_or_role(team):
+    api = api_for(team["video"])
+    response = api.patch("/api/v1/auth/me/", {"full_name": "  Yangi   Ism ", "email": "a@b.uz", "phone": "+998900000000",
+                                              "role": access.RAHBAR}, format="json")
+    assert response.status_code == 200
+    team["video"].refresh_from_db()
+    assert team["video"].full_name == "Yangi Ism" and team["video"].email == "a@b.uz"
+    assert team["video"].phone == "+998901110003" and team["video"].role == access.CREATOR
+    assert api.patch("/api/v1/auth/me/", {"full_name": " "}, format="json").status_code == 400
+
+
 def test_rahbar_cannot_touch_super_admin(rahbar):
     boss = make_user("+998901110099", access.SUPER_ADMIN)
     api = api_for(rahbar)

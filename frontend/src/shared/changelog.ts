@@ -8,6 +8,15 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.6',
+    date: '2026-11-10',
+    title: 'Yangi server va profil',
+    changes: [
+      { area: 'Server', items: ['Panel yangi serverga ko‘chdi: http://185.176.252.245', 'Barcha ma’lumotlar, fayllar va parollar o‘zgarmay ko‘chirildi'] },
+      { area: 'Profil', items: ['Har kim o‘z ism familiyasi va emailini o‘zgartira oladi', 'Telefon (login) o‘zgarmaydi'] },
+    ],
+  },
+  {
     version: '1.5',
     date: '2026-10-31',
     title: 'To‘liq moliya, Harakatlar va Versiyalar',

@@ -72,6 +72,20 @@ class LoginSerializer(serializers.Serializer):
         return normalize_phone(value)
 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    """O'zi o'zgartira oladigan ma'lumotlar. Telefon (login), rol va lavozim bu yerga kirmaydi."""
+
+    class Meta:
+        model = User
+        fields = ["full_name", "email"]
+
+    def validate_full_name(self, value):
+        value = " ".join(value.split())
+        if len(value) < 2:
+            raise serializers.ValidationError("Ism familiyani yozing")
+        return value
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True)
