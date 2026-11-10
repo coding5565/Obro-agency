@@ -217,3 +217,32 @@ def my_shoots(user):
     else:
         qs = qs.filter(project__in=visible_projects(user))
     return [{"id": s.id, "client": s.project.client.name, "when": when_text(s)} for s in qs.distinct()[:15]]
+
+
+# ---------- Kabinetga bir martalik kirish ----------
+
+LOGIN_SALT = "obro.tg-login"
+LOGIN_MAX_AGE = 5 * 60
+
+
+def login_link(user):
+    """5 daqiqa amal qiladi va bir marta ishlaydi: kirilgach last_login o'zgaradi, eski havola yaroqsiz bo'ladi."""
+    from django.core import signing
+
+    stamp = user.last_login.isoformat() if user.last_login else ""
+    token = signing.dumps({"u": user.pk, "l": stamp}, salt=LOGIN_SALT)
+    return f"{settings.FRONTEND_URL.rstrip('/')}/kirish/{token}"
+
+
+def user_from_login_token(token):
+    from django.core import signing
+
+    try:
+        data = signing.loads(token, salt=LOGIN_SALT, max_age=LOGIN_MAX_AGE)
+    except signing.BadSignature:
+        return None
+    user = User.objects.filter(pk=data.get("u"), is_active=True).first()
+    if user is None or user.telegram_chat_id is None:
+        return None
+    stamp = user.last_login.isoformat() if user.last_login else ""
+    return user if stamp == data.get("l") else None

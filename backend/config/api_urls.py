@@ -65,6 +65,7 @@ auth_urls = [
     path("me/", accounts.MeView.as_view(), name="me"),
     path("password/", accounts.ChangePasswordView.as_view(), name="change-password"),
     path("invite/<str:token>/", accounts.AcceptInviteView.as_view(), name="accept-invite"),
+    path("telegram/", accounts.TelegramLoginView.as_view(), name="telegram-login"),
 ]
 
 portal_urls = [
@@ -99,6 +100,10 @@ bot_urls = [
     path("briefs/<int:pk>/accept/", telegram.BotBriefAcceptView.as_view()),
     path("shoots/", telegram.BotShootsView.as_view()),
     path("shoots/<int:pk>/confirm/", telegram.BotShootConfirmView.as_view()),
+    path("status/", telegram.BotStatusView.as_view()),
+    path("leads/", telegram.BotLeadsView.as_view()),
+    path("payments/", telegram.BotPaymentsView.as_view()),
+    path("login-link/", telegram.BotLoginLinkView.as_view()),
     path("jobs/daily/", telegram.BotDailyJobView.as_view()),
     path("jobs/evening/", telegram.BotEveningJobView.as_view()),
 ]

@@ -198,7 +198,7 @@ FRONTEND_URL = env("FRONTEND_URL", "http://localhost:5173")
 # Kunlik zaxira nusxa (manage.py backup_db). Token va chat bo'lsa, nusxa Telegram'ga ham yuboriladi.
 BACKUP_DIR = env("BACKUP_DIR", str(BASE_DIR / "backups"))
 BACKUP_KEEP_DAYS = int(env("BACKUP_KEEP_DAYS", "14"))
-BACKUP_TELEGRAM_TOKEN = env("BACKUP_TELEGRAM_TOKEN", "")
+BACKUP_TELEGRAM_TOKEN = env("BACKUP_TELEGRAM_TOKEN", "") or env("TELEGRAM_BOT_TOKEN", "")
 BACKUP_TELEGRAM_CHAT_ID = env("BACKUP_TELEGRAM_CHAT_ID", "")
 
 # Javobsiz lid: shuncha daqiqadan keyin mas'ulga, keyin rahbarga eslatiladi.

@@ -13,8 +13,15 @@ from obro_bot.handlers import router
 from obro_bot.jobs import outbox_loop, schedule_loop
 
 COMMANDS = [
+    BotCommand(command="start", description="Menyu"),
+    BotCommand(command="holat", description="Holat va hisobot"),
+    BotCommand(command="kirish", description="Kabinetga parolsiz kirish"),
     BotCommand(command="bugun", description="Bugungi vazifalar"),
     BotCommand(command="jurnal", description="Ish jurnaliga yozish"),
+    BotCommand(command="tz", description="Menga berilgan TZ"),
+    BotCommand(command="syomka", description="Yaqin syomkalar"),
+    BotCommand(command="lidlar", description="So‘nggi lidlar"),
+    BotCommand(command="tolov", description="To‘lovlar (mijoz)"),
     BotCommand(command="yordam", description="Yordam"),
     BotCommand(command="uzish", description="Botni akkauntdan uzish"),
 ]

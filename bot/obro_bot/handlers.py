@@ -7,23 +7,33 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
+from obro_bot import keyboards as kb
 from obro_bot.api import Api, ApiError
-from obro_bot.keyboards import WORK_KINDS, kinds_keyboard, projects_keyboard, tasks_keyboard
+from obro_bot.keyboards import WORK_KINDS, kinds_keyboard, login_keyboard, main_menu, projects_keyboard, tasks_keyboard
 
 router = Router()
 
 NOT_LINKED = ("Bu Telegram akkaunti OBRO’ Panel’ga ulanmagan.\n\n"
               "Panelga kiring → chap pastdagi ismingiz → «Telegram’ni ulash» tugmasini bosing.")
 
-STAFF_HELP = ("Buyruqlar:\n"
-              "/bugun — bugungi va muddati yaqin vazifalar\n"
-              "/jurnal — ish jurnaliga yozish (1 daqiqa)\n"
-              "/tz — menga berilgan TZ’lar\n"
-              "/syomka — yaqin syomkalar\n"
+STAFF_HELP = ("Pastdagi tugmalar:\n"
+              "📊 Holat — vazifalar, TZ, syomka, ulushingiz (rahbarga agentlik holati ham)\n"
+              "📋 Bugun — bugungi va muddati yaqin vazifalar\n"
+              "📝 Jurnal — ish jurnaliga yozish (1 daqiqa)\n"
+              "🎬 TZ — sizga berilgan TZ’lar\n"
+              "📸 Syomka — yaqin syomkalar\n"
+              "📞 Lidlar — so‘nggi lidlar\n"
+              "🔑 Kabinetga kirish — panelni parolsiz ochish\n\n"
               "/id — shu chat raqami (lidlar guruhi uchun)\n"
               "/uzish — botni akkauntdan uzish")
-CLIENT_HELP = ("Material tayyor bo‘lsa, shu yerga xabar keladi — «Tasdiqlayman» yoki «Izoh qoldirish» "
-               "tugmasini bosasiz.\n/syomka — yaqin syomkalar\n/uzish — botni akkauntdan uzish")
+CLIENT_HELP = ("Material tayyor bo‘lsa, shu yerga xabar keladi: «Tasdiqlayman» yoki «Izoh qoldirish».\n\n"
+               "Pastdagi tugmalar:\n"
+               "📊 Holat — shu oy nima qilindi, tasdiq kutayotganlar\n"
+               "📸 Syomka — yaqin syomka kunlari\n"
+               "💳 To‘lov — hisob-fakturalar va qoldiq\n"
+               "📞 Lidlar — reklamadan kelgan murojaatlar\n"
+               "🔑 Kabinetga kirish — kabinetni parolsiz ochish\n\n"
+               "/uzish — botni akkauntdan uzish")
 
 
 class Journal(StatesGroup):
@@ -49,7 +59,8 @@ async def start_with_token(message: Message, command: CommandObject, api: Api):
         return
     help_text = CLIENT_HELP if profile["is_client"] else STAFF_HELP
     await message.answer(f"Assalomu alaykum, <b>{escape(profile['full_name'])}</b>! "
-                         f"Akkaunt ulandi ({escape(profile['role_label'])}).\n\n{help_text}")
+                         f"Akkaunt ulandi ({escape(profile['role_label'])}).\n\n{help_text}",
+                         reply_markup=main_menu(profile))
 
 
 @router.message(CommandStart())
@@ -60,9 +71,11 @@ async def start(message: Message, api: Api):
         await message.answer(f"<b>OBRO’ Panel</b> boti.\n\n{NOT_LINKED}")
         return
     help_text = CLIENT_HELP if profile["is_client"] else STAFF_HELP
-    await message.answer(f"Siz <b>{escape(profile['full_name'])}</b> sifatida ulangansiz.\n\n{help_text}")
+    await message.answer(f"Siz <b>{escape(profile['full_name'])}</b> sifatida ulangansiz.\n\n{help_text}",
+                         reply_markup=main_menu(profile))
 
 
+@router.message(F.text == kb.HELP)
 @router.message(Command("yordam", "help"))
 async def help_cmd(message: Message, api: Api):
     await start(message, api)
@@ -81,6 +94,7 @@ async def unlink(message: Message, api: Api, state: FSMContext):
 
 # ---------- Jamoa: vazifalar ----------
 
+@router.message(F.text == kb.TODAY)
 @router.message(Command("bugun"))
 async def today(message: Message, api: Api):
     try:
@@ -114,6 +128,7 @@ async def task_done(callback: CallbackQuery, api: Api):
 
 # ---------- Jamoa: ish jurnali ----------
 
+@router.message(F.text == kb.JOURNAL)
 @router.message(Command("jurnal"))
 async def journal_start(message: Message, api: Api, state: FSMContext):
     try:
@@ -248,6 +263,7 @@ async def shoot_confirm(callback: CallbackQuery, api: Api):
     await callback.message.answer(f"✅ Syomka tasdiqlandi: {escape(result['when'])}")
 
 
+@router.message(F.text == kb.BRIEFS)
 @router.message(Command("tz"))
 async def my_briefs(message: Message, api: Api):
     try:
@@ -265,6 +281,7 @@ async def my_briefs(message: Message, api: Api):
     await message.answer("<b>Sizning TZ’laringiz</b>\n" + "\n".join(lines))
 
 
+@router.message(F.text == kb.SHOOTS)
 @router.message(Command("syomka"))
 async def my_shoots(message: Message, api: Api):
     try:
@@ -277,6 +294,45 @@ async def my_shoots(message: Message, api: Api):
         return
     lines = [f"• {escape(s['when'])} <i>({escape(s['client'])})</i>" for s in shoots]
     await message.answer("<b>Yaqin syomkalar</b>\n" + "\n".join(lines))
+
+
+async def _show(message: Message, call):
+    try:
+        data = await call(message.chat.id)
+    except ApiError as exc:
+        await message.answer(escape(exc.message) if exc.status != 404 else NOT_LINKED)
+        return
+    await message.answer(data["text"])
+
+
+@router.message(F.text == kb.STATUS)
+@router.message(Command("holat"))
+async def status(message: Message, api: Api):
+    await _show(message, api.status)
+
+
+@router.message(F.text == kb.LEADS)
+@router.message(Command("lidlar"))
+async def leads(message: Message, api: Api):
+    await _show(message, api.leads)
+
+
+@router.message(F.text == kb.PAYMENTS)
+@router.message(Command("tolov"))
+async def payments(message: Message, api: Api):
+    await _show(message, api.payments)
+
+
+@router.message(F.text == kb.LOGIN)
+@router.message(Command("kirish"))
+async def login(message: Message, api: Api):
+    try:
+        data = await api.login_link(message.chat.id)
+    except ApiError as exc:
+        await message.answer(escape(exc.message) if exc.status != 404 else NOT_LINKED)
+        return
+    await message.answer("Kabinetingizga parolsiz kirish havolasi. 5 daqiqa ichida va faqat bir marta ishlaydi, "
+                         "uni hech kimga yubormang.", reply_markup=login_keyboard(data["url"]))
 
 
 @router.message(F.text)

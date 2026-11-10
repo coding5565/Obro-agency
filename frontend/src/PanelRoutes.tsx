@@ -34,6 +34,7 @@ import { TeamPage } from './pages/team/Team'
 import { VersionsPage } from './pages/team/Versions'
 import { WorklogPage } from './pages/team/Worklog'
 import { LoginPage } from './pages/Login'
+import { TelegramLoginPage } from './pages/TelegramLogin'
 import { useAuth } from './shared/auth/AuthProvider'
 import { Empty, Spinner } from './shared/ui'
 
@@ -61,6 +62,7 @@ export default function PanelRoutes() {
       <Route path="login" element={<LoginPage door="client" />} />
       <Route path="jamoa" element={<LoginPage door="staff" />} />
       <Route path="invite/:token" element={<AcceptInvitePage />} />
+      <Route path="kirish/:token" element={<TelegramLoginPage />} />
         <Route path="app" element={<Guard kind="staff"><StaffLayout /></Guard>}>
           <Route index element={<DashboardPage />} />
           <Route path="clients" element={<Need perm="clients.view"><ClientsPage /></Need>} />

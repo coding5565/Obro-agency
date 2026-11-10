@@ -58,6 +58,27 @@ class LoginView(APIView):
         return _token_response(user)
 
 
+class TelegramLoginView(APIView):
+    """Botdagi «Kabinetga kirish» havolasi: parolsiz, bir martalik, 5 daqiqa."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
+
+    def post(self, request):
+        from apps.telegram.services import user_from_login_token
+
+        user = user_from_login_token(str(request.data.get("token", "")))
+        if user is None:
+            return Response({"detail": "Havola eskirgan. Botdan qaytadan «Kabinetga kirish» tugmasini bosing."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
+        audit.log(user, "auth.login", user, comment="Telegram orqali")
+        return _token_response(user)
+
+
 class RefreshView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []

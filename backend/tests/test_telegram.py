@@ -211,3 +211,43 @@ def other_client_user(other_project):
 
 def test_make_project_helper_still_works(team):
     assert make_project("Test", "basic", team).client.name == "Test"
+
+
+class TestBotMenu:
+    def test_status_per_role(self, rahbar, team, client_user, project):
+        link(rahbar, 9101)
+        link(team["video"], 9102)
+        link(client_user, 9103)
+        boss = bot().get("/api/v1/bot/status/", {"chat_id": 9101}).data["text"]
+        assert "Agentlik holati" in boss and "tushum" in boss
+        creator = bot().get("/api/v1/bot/status/", {"chat_id": 9102}).data["text"]
+        assert "Ochiq vazifalar" in creator and "Agentlik holati" not in creator and "tushum" not in creator
+        client = bot().get("/api/v1/bot/status/", {"chat_id": 9103}).data["text"]
+        assert "Klinika A" in client and "Shu oy joylandi" in client
+        assert bot().get("/api/v1/bot/me/", {"chat_id": 9102}).data["can_leads"] is False
+
+    def test_leads_and_payments_respect_access(self, team, client_user, project):
+        link(team["video"], 9104)
+        link(client_user, 9105)
+        assert "ochiq emas" in bot().get("/api/v1/bot/leads/", {"chat_id": 9104}).data["text"]
+        assert "mijoz kabineti uchun" in bot().get("/api/v1/bot/payments/", {"chat_id": 9104}).data["text"]
+        assert bot().get("/api/v1/bot/payments/", {"chat_id": 9105}).status_code == 200
+        assert bot().get("/api/v1/bot/status/", {"chat_id": 1}).status_code == 404
+
+    def test_one_time_login_link(self, team):
+        link(team["smm"], 9106)
+        url = bot().post("/api/v1/bot/login-link/", {"chat_id": 9106}, format="json").data["url"]
+        token = url.rsplit("/kirish/", 1)[1]
+        client = APIClient()
+        first = client.post("/api/v1/auth/telegram/", {"token": token}, format="json")
+        assert first.status_code == 200 and first.data["user"]["full_name"] == "SMM"
+        again = APIClient().post("/api/v1/auth/telegram/", {"token": token}, format="json")
+        assert again.status_code == 400
+        assert APIClient().post("/api/v1/auth/telegram/", {"token": "soxta"}, format="json").status_code == 400
+
+    def test_login_link_stops_after_unlink(self, team):
+        link(team["smm"], 9107)
+        url = bot().post("/api/v1/bot/login-link/", {"chat_id": 9107}, format="json").data["url"]
+        bot().post("/api/v1/bot/unlink/", {"chat_id": 9107}, format="json")
+        token = url.rsplit("/kirish/", 1)[1]
+        assert APIClient().post("/api/v1/auth/telegram/", {"token": token}, format="json").status_code == 400

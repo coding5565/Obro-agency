@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
 WORK_KINDS = [
     ("shooting", "🎥 Suratga olish"),
@@ -50,3 +50,31 @@ def kinds_keyboard():
     if row:
         rows.append(row)
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+# Pastki menyu tugmalari: matni handlers.py dagi MENU bilan bir xil bo'lishi shart.
+STATUS = "📊 Holat"
+TODAY = "📋 Bugun"
+JOURNAL = "📝 Jurnal"
+BRIEFS = "🎬 TZ"
+SHOOTS = "📸 Syomka"
+LEADS = "📞 Lidlar"
+PAYMENTS = "💳 To‘lov"
+LOGIN = "🔑 Kabinetga kirish"
+HELP = "❓ Yordam"
+
+
+def main_menu(profile):
+    """Rolga qarab pastki menyu. Mijozga ish jurnali, xodimga to'lov tugmasi chiqmaydi."""
+    if profile.get("is_client"):
+        rows = [[STATUS, SHOOTS], [PAYMENTS, LEADS], [LOGIN, HELP]]
+    else:
+        rows = [[STATUS, TODAY], [JOURNAL, BRIEFS], [SHOOTS, LEADS] if profile.get("can_leads") else [SHOOTS],
+                [LOGIN, HELP]]
+    keyboard = [[KeyboardButton(text=text) for text in row] for row in rows]
+    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True, is_persistent=True)
+
+
+def login_keyboard(url):
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🔑 Kabinetni ochish", url=url)]])
+

@@ -86,6 +86,19 @@ class Api:
     async def shoot_confirm(self, chat_id: int, shoot_id: int):
         return await self._call("POST", f"/bot/shoots/{shoot_id}/confirm/", json={"chat_id": chat_id})
 
+    # Holat, lidlar, to'lov va kabinetga kirish
+    async def status(self, chat_id: int):
+        return await self._call("GET", "/bot/status/", params={"chat_id": chat_id})
+
+    async def leads(self, chat_id: int):
+        return await self._call("GET", "/bot/leads/", params={"chat_id": chat_id})
+
+    async def payments(self, chat_id: int):
+        return await self._call("GET", "/bot/payments/", params={"chat_id": chat_id})
+
+    async def login_link(self, chat_id: int):
+        return await self._call("POST", "/bot/login-link/", json={"chat_id": chat_id})
+
     # Rejali ishlar
     async def daily_job(self):
         return await self._call("POST", "/bot/jobs/daily/", json={})

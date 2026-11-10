@@ -10,6 +10,8 @@ HTTPS_ENABLED = env_bool("HTTPS_ENABLED", True)
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = HTTPS_ENABLED and env_bool("SECURE_SSL_REDIRECT", True)
+# Bot API faqat serverning ichidan (127.0.0.1) chaqiriladi va maxfiy kalit bilan himoyalangan.
+SECURE_REDIRECT_EXEMPT = [r"^api/v1/bot/"]
 SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30 if HTTPS_ENABLED else 0
 # Pochta kabi boshqa subdomenlar HTTPS'siz bo'lishi mumkin: ularni majburlamaymiz.
 SECURE_HSTS_INCLUDE_SUBDOMAINS = HTTPS_ENABLED and env_bool("HSTS_INCLUDE_SUBDOMAINS", False)

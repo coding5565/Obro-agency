@@ -80,6 +80,18 @@ def send_telegram(token: str, chat_id: str, path: Path, caption: str):
         raise BackupError(f"Telegram'ga yuborilmadi: {data.get('description', '')[:200]}")
 
 
+def recipients():
+    """Kimga yuboriladi: sozlamada chat berilgan bo'lsa o'sha, aks holda Telegram ulagan super adminlar."""
+    from apps.accounts.models import User
+    from common import access
+
+    if settings.BACKUP_TELEGRAM_CHAT_ID:
+        return [settings.BACKUP_TELEGRAM_CHAT_ID]
+    return [str(chat) for chat in User.objects.filter(role=access.SUPER_ADMIN, is_active=True,
+                                                       telegram_chat_id__isnull=False)
+            .values_list("telegram_chat_id", flat=True)]
+
+
 def summary():
     from apps.clients.models import Client
     from apps.finance.models import Expense, Payment
@@ -102,15 +114,17 @@ def run(now=None):
     for path in files:
         path.chmod(0o600)
     sent = []
-    token, chat_id = settings.BACKUP_TELEGRAM_TOKEN, settings.BACKUP_TELEGRAM_CHAT_ID
-    if token and chat_id:
+    token = settings.BACKUP_TELEGRAM_TOKEN
+    chats = recipients()
+    if token and chats:
         for path in files:
             size = path.stat().st_size
             if size > TELEGRAM_LIMIT:
                 sent.append(f"{path.name}: {size // 1024 // 1024} MB, Telegram uchun katta, serverda qoldi")
                 continue
             caption = f"OBRO baza nusxasi · {now:%d.%m.%Y %H:%M} · {size / 1024:.0f} KB\n{summary()}"
-            send_telegram(token, chat_id, path, caption)
-            sent.append(f"{path.name}: Telegram'ga yuborildi")
+            for chat_id in chats:
+                send_telegram(token, chat_id, path, caption)
+            sent.append(f"{path.name}: Telegram'ga yuborildi ({len(chats)} kishi)")
     removed = prune(folder, settings.BACKUP_KEEP_DAYS, now)
     return {"files": [p.name for p in files], "sent": sent, "removed": removed}

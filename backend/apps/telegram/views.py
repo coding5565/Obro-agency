@@ -25,6 +25,8 @@ from apps.leads import services as lead_services
 from apps.tasks.models import DONE, Task
 from apps.tasks.services import set_task_status
 from apps.telegram import services
+from apps.telegram import status as bot_status
+from common import access
 
 
 class BotSecretPermission(BasePermission):
@@ -69,7 +71,8 @@ class BotView(APIView):
 
 def _profile(user):
     return {"full_name": user.full_name, "role": user.role, "role_label": user.get_role_display(),
-            "is_client": user.is_client}
+            "is_client": user.is_client, "is_manager": user.role in access.MANAGEMENT_ROLES,
+            "can_leads": user.is_client or user.has_obro_perm(access.LEADS_VIEW)}
 
 
 class BotLinkView(BotView):
@@ -222,3 +225,23 @@ class BotShootConfirmView(BotView):
                                   project__client__memberships__user=user)
         client_confirm(shoot, by=user)
         return Response({"ok": True, "when": when_text(shoot)})
+
+
+class BotStatusView(BotView):
+    def get(self, request):
+        return Response({"text": bot_status.status_text(self.chat_user(request))})
+
+
+class BotLeadsView(BotView):
+    def get(self, request):
+        return Response({"text": bot_status.leads_text(self.chat_user(request))})
+
+
+class BotPaymentsView(BotView):
+    def get(self, request):
+        return Response({"text": bot_status.payments_text(self.chat_user(request))})
+
+
+class BotLoginLinkView(BotView):
+    def post(self, request):
+        return Response({"url": services.login_link(self.chat_user(request))})
