@@ -152,13 +152,10 @@ systemctl restart obro-panel-api
 systemctl enable --now obro-panel-reminders.timer >/dev/null
 
 log "nginx (port $PUBLIC_PORT, faqat yangi fayl)"
-cat > /etc/nginx/sites-available/obro-panel <<EOF
-server {
-    listen $PUBLIC_PORT;
-    listen [::]:$PUBLIC_PORT;
-    server_name $SERVER_NAME;
+# Let's Encrypt tekshiruvi va sertifikat yangilanishi uchun papka.
+mkdir -p /var/www/letsencrypt
+APP_LOCATIONS="
     client_max_body_size 300m;
-
     root $ROOT/frontend;
     index index.html;
 
@@ -176,15 +173,44 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
     location /static/ { alias $ROOT/static/; expires 7d; }
-    location /assets/ { expires 30d; add_header Cache-Control "public, immutable"; try_files \$uri =404; }
-    location / { try_files \$uri /index.html; }
+    location /assets/ { expires 30d; add_header Cache-Control \"public, immutable\"; try_files \$uri =404; }
+    location / { try_files \$uri /index.html; }"
+ACME="location /.well-known/acme-challenge/ { root /var/www/letsencrypt; }"
+CERT_DIR="/etc/letsencrypt/live/${CERT_DOMAIN:-none}"
+if [ -n "${CERT_DOMAIN:-}" ] && [ -f "$CERT_DIR/fullchain.pem" ]; then
+  # Sertifikat bor: hamma http so'rov (IP orqali ham) https://domenga yo'naltiriladi.
+  cat > /etc/nginx/sites-available/obro-panel <<EOF
+server {
+    listen $PUBLIC_PORT;
+    listen [::]:$PUBLIC_PORT;
+    server_name $SERVER_NAME;
+    $ACME
+    location / { return 301 https://$CERT_DOMAIN\$request_uri; }
+}
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name $CERT_DOMAIN www.$CERT_DOMAIN;
+    ssl_certificate $CERT_DIR/fullchain.pem;
+    ssl_certificate_key $CERT_DIR/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:obro_ssl:10m;
+    $ACME
+$APP_LOCATIONS
 }
 EOF
-ln -sf /etc/nginx/sites-available/obro-panel /etc/nginx/sites-enabled/obro-panel
-# certbot sertifikat qo'shgan bo'lsa, yangilanishda yo'qolmasin.
-if [ -n "${CERT_DOMAIN:-}" ] && [ -d "/etc/letsencrypt/live/$CERT_DOMAIN" ] && command -v certbot >/dev/null; then
-  certbot install --nginx --cert-name "$CERT_DOMAIN" -d "$CERT_DOMAIN" -d "www.$CERT_DOMAIN" --redirect --non-interactive >/dev/null 2>&1 || true
+else
+  cat > /etc/nginx/sites-available/obro-panel <<EOF
+server {
+    listen $PUBLIC_PORT;
+    listen [::]:$PUBLIC_PORT;
+    server_name $SERVER_NAME;
+    $ACME
+$APP_LOCATIONS
+}
+EOF
 fi
+ln -sf /etc/nginx/sites-available/obro-panel /etc/nginx/sites-enabled/obro-panel
 nginx -t
 systemctl reload nginx
 
