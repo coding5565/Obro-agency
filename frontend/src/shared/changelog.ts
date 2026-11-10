@@ -8,6 +8,14 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.9',
+    date: '2026-11-10',
+    title: 'Telefon ilovasi',
+    changes: [
+      { area: 'Ilova', items: ['Saytni telefonga ilova qilib o‘rnatish: Android’da bir tugma, iPhone’da qisqa yo‘riqnoma', '«Ilovani o‘rnatish» tugmasi saytda, kirish sahifasida va panel menyusida', 'Ilova ochilganda to‘g‘ri kabinetingizga kiradi', 'Internet bo‘lmasa, tushunarli xabar chiqadi'] },
+    ],
+  },
+  {
     version: '1.8',
     date: '2026-11-10',
     title: 'Telegram bot, domen va kunlik nusxa',
