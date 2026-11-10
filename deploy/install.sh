@@ -172,9 +172,37 @@ Persistent=true
 WantedBy=timers.target
 EOF
 mkdir -p "$ROOT/backups" && chown obro:obro "$ROOT/backups" && chmod 700 "$ROOT/backups"
+BOT_ENV=$ROOT/bot.env
+if [ -f "$BOT_ENV" ]; then
+  log "Telegram bot"
+  [ -d "$ROOT/botvenv" ] || "$PY" -m venv "$ROOT/botvenv"
+  "$ROOT/botvenv/bin/pip" install -q -r "$APP/bot/requirements.txt"
+  chown obro:obro "$BOT_ENV" && chmod 600 "$BOT_ENV"
+  cat > /etc/systemd/system/obro-panel-bot.service <<EOF
+[Unit]
+Description=OBRO' Panel Telegram boti
+After=network-online.target obro-panel-api.service
+
+[Service]
+User=obro
+Group=obro
+WorkingDirectory=$APP/bot
+EnvironmentFile=$BOT_ENV
+ExecStart=$ROOT/botvenv/bin/python -m obro_bot
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+fi
 systemctl daemon-reload
 systemctl enable --now obro-panel-api >/dev/null
 systemctl enable --now obro-panel-backup.timer >/dev/null
+if [ -f "$BOT_ENV" ]; then
+  systemctl enable obro-panel-bot >/dev/null
+  systemctl restart obro-panel-bot
+fi
 systemctl restart obro-panel-api
 systemctl enable --now obro-panel-reminders.timer >/dev/null
 
