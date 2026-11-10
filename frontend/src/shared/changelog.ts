@@ -8,6 +8,16 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.8',
+    date: '2026-11-10',
+    title: 'Telegram bot, domen va kunlik nusxa',
+    changes: [
+      { area: 'Bot @obroagencybot', items: ['Mijoz va xodim telefon raqamini yuborib botga kiradi', 'Rolga qarab menyu: holat, vazifalar, TZ, syomka, lidlar, to‘lov', '«Kabinetga kirish»: parolsiz, bir martalik havola', 'Yangi odamlar tariflarni ko‘radi va ariza qoldiradi, ariza Mijozlar bo‘limiga potensial bo‘lib tushadi'] },
+      { area: 'Sayt', items: ['https://obroagency.uz domeni va SSL sertifikati'] },
+      { area: 'Xavfsizlik', items: ['Har kuni 21:00 da baza nusxasi olinadi va Super adminlarga Telegram’da yuboriladi'] },
+    ],
+  },
+  {
     version: '1.7',
     date: '2026-11-10',
     title: '5 ta tarif va hamma uchun CRM',

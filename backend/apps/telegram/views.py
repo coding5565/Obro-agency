@@ -24,7 +24,7 @@ from apps.leads import models as lm
 from apps.leads import services as lead_services
 from apps.tasks.models import DONE, Task
 from apps.tasks.services import set_task_status
-from apps.telegram import services
+from apps.telegram import guest, services
 from apps.telegram import status as bot_status
 from common import access
 
@@ -245,3 +245,26 @@ class BotPaymentsView(BotView):
 class BotLoginLinkView(BotView):
     def post(self, request):
         return Response({"url": services.login_link(self.chat_user(request))})
+
+
+class BotLinkPhoneView(BotView):
+    """Bot faqat foydalanuvchining o'z kontaktini yuboradi (contact.user_id == from_user.id tekshiriladi)."""
+
+    def post(self, request):
+        user = guest.link_by_phone(self.chat_id(request), request.data.get("phone", ""),
+                                   request.data.get("username", ""))
+        return Response(_profile(user))
+
+
+class BotTariffsView(BotView):
+    def get(self, request):
+        return Response({"text": guest.tariffs_text(), "contact": guest.CONTACT})
+
+
+class BotGuestRequestView(BotView):
+    def post(self, request):
+        data = request.data
+        _, created = guest.create_request(chat_id=self.chat_id(request), full_name=data.get("full_name", ""),
+                                          business=data.get("business", ""), phone=data.get("phone", ""),
+                                          username=data.get("username", ""))
+        return Response({"ok": True, "created": created}, status=status.HTTP_201_CREATED if created else 200)

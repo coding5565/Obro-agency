@@ -64,6 +64,30 @@ LOGIN = "🔑 Kabinetga kirish"
 HELP = "❓ Yordam"
 
 
+PHONE_LOGIN = "📱 Raqam bilan kirish"
+TARIFFS = "💼 Tariflar"
+APPLY = "📝 Ariza qoldirish"
+CONTACT = "📞 Aloqa"
+SHARE_PHONE = "📱 Raqamni yuborish"
+CANCEL = "↩️ Bekor qilish"
+
+
+def guest_menu():
+    """Botni ulanmagan odam: mijoz yoki xodim bo'lsa raqam bilan kiradi, yangi odam tarif ko'radi va ariza qoldiradi."""
+    rows = [[KeyboardButton(text=PHONE_LOGIN, request_contact=True)],
+            [KeyboardButton(text=TARIFFS), KeyboardButton(text=APPLY)], [KeyboardButton(text=CONTACT)]]
+    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True, is_persistent=True)
+
+
+def phone_request():
+    rows = [[KeyboardButton(text=SHARE_PHONE, request_contact=True)], [KeyboardButton(text=CANCEL)]]
+    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True, one_time_keyboard=True)
+
+
+def cancel_menu():
+    return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=CANCEL)]], resize_keyboard=True)
+
+
 def main_menu(profile):
     """Rolga qarab pastki menyu. Mijozga ish jurnali, xodimga to'lov tugmasi chiqmaydi."""
     if profile.get("is_client"):

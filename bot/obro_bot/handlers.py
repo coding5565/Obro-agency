@@ -13,8 +13,12 @@ from obro_bot.keyboards import WORK_KINDS, kinds_keyboard, login_keyboard, main_
 
 router = Router()
 
-NOT_LINKED = ("Bu Telegram akkaunti OBRO’ Panel’ga ulanmagan.\n\n"
-              "Panelga kiring → chap pastdagi ismingiz → «Telegram’ni ulash» tugmasini bosing.")
+NOT_LINKED = ("Bu Telegram akkaunti hali ulanmagan.\n\n"
+              "Agar OBRO AGENCY mijozi yoki xodimi bo‘lsangiz, pastdagi «📱 Raqam bilan kirish» tugmasini bosing: "
+              "kabinetingizdagi telefon raqami bilan bot o‘zi taniydi.")
+GUEST_WELCOME = ("Assalomu alaykum! <b>OBRO AGENCY</b> botiga xush kelibsiz.\n\n"
+                 "📱 <b>Mijoz yoki xodim bo‘lsangiz</b>: «Raqam bilan kirish»ni bosing.\n"
+                 "💼 <b>Yangi bo‘lsangiz</b>: tariflarni ko‘ring yoki ariza qoldiring, o‘zimiz bog‘lanamiz.")
 
 STAFF_HELP = ("Pastdagi tugmalar:\n"
               "📊 Holat — vazifalar, TZ, syomka, ulushingiz (rahbarga agentlik holati ham)\n"
@@ -46,6 +50,12 @@ class ChangeRequest(StatesGroup):
     comment = State()
 
 
+class Apply(StatesGroup):
+    name = State()
+    business = State()
+    phone = State()
+
+
 def _kind_label(code):
     return dict(WORK_KINDS).get(code, code)
 
@@ -68,7 +78,7 @@ async def start(message: Message, api: Api):
     try:
         profile = await api.me(message.chat.id)
     except ApiError:
-        await message.answer(f"<b>OBRO’ Panel</b> boti.\n\n{NOT_LINKED}")
+        await message.answer(GUEST_WELCOME, reply_markup=kb.guest_menu())
         return
     help_text = CLIENT_HELP if profile["is_client"] else STAFF_HELP
     await message.answer(f"Siz <b>{escape(profile['full_name'])}</b> sifatida ulangansiz.\n\n{help_text}",
@@ -296,11 +306,107 @@ async def my_shoots(message: Message, api: Api):
     await message.answer("<b>Yaqin syomkalar</b>\n" + "\n".join(lines))
 
 
+# ---------- Mehmonlar: raqam bilan kirish, tariflar, ariza ----------
+
+@router.message(F.contact)
+async def contact_login(message: Message, api: Api, state: FSMContext):
+    contact = message.contact
+    # Faqat o'z raqami: boshqa odamning kontaktini yuborib kirib bo'lmaydi.
+    if contact.user_id != message.from_user.id:
+        await message.answer("Iltimos, o‘zingizning raqamingizni tugma orqali yuboring.", reply_markup=kb.guest_menu())
+        return
+    if await state.get_state() == Apply.phone.state:
+        await _finish_apply(message, api, state, contact.phone_number)
+        return
+    try:
+        profile = await api.link_phone(message.chat.id, contact.phone_number, message.from_user.username or "")
+    except ApiError as exc:
+        if exc.status == 404:
+            await message.answer("Bu raqam bilan akkaunt topilmadi. Mijozimiz bo‘lsangiz, SMM menejeringizdan "
+                                 "kabinetdagi raqamni so‘rang. Yangi bo‘lsangiz, ariza qoldiring.",
+                                 reply_markup=kb.guest_menu())
+        else:
+            await message.answer(escape(exc.message), reply_markup=kb.guest_menu())
+        return
+    help_text = CLIENT_HELP if profile["is_client"] else STAFF_HELP
+    await message.answer(f"Assalomu alaykum, <b>{escape(profile['full_name'])}</b>! Bot ulandi.\n\n{help_text}",
+                         reply_markup=main_menu(profile))
+
+
+@router.message(F.text == kb.TARIFFS)
+@router.message(Command("tariflar"))
+async def tariffs(message: Message, api: Api):
+    try:
+        data = await api.tariffs()
+    except ApiError as exc:
+        await message.answer(escape(exc.message))
+        return
+    await message.answer(data["text"])
+
+
+@router.message(F.text == kb.CONTACT)
+@router.message(Command("aloqa"))
+async def contact_info(message: Message, api: Api):
+    try:
+        data = await api.tariffs()
+    except ApiError as exc:
+        await message.answer(escape(exc.message))
+        return
+    await message.answer(data["contact"])
+
+
+@router.message(F.text == kb.APPLY)
+@router.message(Command("ariza"))
+async def apply_start(message: Message, state: FSMContext):
+    await state.set_state(Apply.name)
+    await message.answer("Ismingiz?", reply_markup=kb.cancel_menu())
+
+
+@router.message(F.text == kb.CANCEL)
+async def apply_cancel(message: Message, state: FSMContext, api: Api):
+    await state.clear()
+    await start(message, api)
+
+
+@router.message(Apply.name, F.text)
+async def apply_name(message: Message, state: FSMContext):
+    await state.update_data(name=message.text.strip()[:150])
+    await state.set_state(Apply.business)
+    await message.answer("Biznesingiz nomi va sohasi? (masalan: «Nur klinikasi, stomatologiya»)")
+
+
+@router.message(Apply.business, F.text)
+async def apply_business(message: Message, state: FSMContext):
+    await state.update_data(business=message.text.strip()[:150])
+    await state.set_state(Apply.phone)
+    await message.answer("Telefon raqamingizni yuboring (tugmani bosing yoki yozing):", reply_markup=kb.phone_request())
+
+
+@router.message(Apply.phone, F.text)
+async def apply_phone_text(message: Message, api: Api, state: FSMContext):
+    await _finish_apply(message, api, state, message.text)
+
+
+async def _finish_apply(message: Message, api: Api, state: FSMContext, phone: str):
+    data = await state.get_data()
+    try:
+        await api.guest_request(message.chat.id, data.get("name", ""), data.get("business", ""), phone,
+                                message.from_user.username or "")
+    except ApiError as exc:
+        await message.answer(escape(exc.message), reply_markup=kb.phone_request())
+        return
+    await state.clear()
+    await message.answer("Rahmat! Arizangiz qabul qilindi, tez orada bog‘lanamiz. ✅", reply_markup=kb.guest_menu())
+
+
 async def _show(message: Message, call):
     try:
         data = await call(message.chat.id)
     except ApiError as exc:
-        await message.answer(escape(exc.message) if exc.status != 404 else NOT_LINKED)
+        if exc.status == 404:
+            await message.answer(NOT_LINKED, reply_markup=kb.guest_menu())
+        else:
+            await message.answer(escape(exc.message))
         return
     await message.answer(data["text"])
 

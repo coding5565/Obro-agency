@@ -26,7 +26,7 @@ from common.money import q
 from common.permissions import ObroPermission
 
 ACTION_LABELS = {
-    "auth.login": "Tizimga kirdi",
+    "auth.login": "Tizimga kirdi", "telegram.link": "Telegram botni uladi",
     "client.create": "Yangi mijoz qo‘shdi", "project.create": "Yangi loyiha ochdi",
     "project.update": "Loyihani o‘zgartirdi",
     "assignment.create": "Xodimni loyihaga biriktirdi", "assignment.update": "Biriktirishni o‘zgartirdi",

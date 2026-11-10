@@ -104,6 +104,9 @@ bot_urls = [
     path("leads/", telegram.BotLeadsView.as_view()),
     path("payments/", telegram.BotPaymentsView.as_view()),
     path("login-link/", telegram.BotLoginLinkView.as_view()),
+    path("link-phone/", telegram.BotLinkPhoneView.as_view()),
+    path("tariffs/", telegram.BotTariffsView.as_view()),
+    path("request/", telegram.BotGuestRequestView.as_view()),
     path("jobs/daily/", telegram.BotDailyJobView.as_view()),
     path("jobs/evening/", telegram.BotEveningJobView.as_view()),
 ]

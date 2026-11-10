@@ -69,3 +69,14 @@ def test_api_error_message():
     with pytest.raises(ApiError) as exc:
         asyncio.run(api.me(1))
     assert exc.value.status == 404 and "ulanmagan" in exc.value.message
+
+
+def test_menus():
+    from obro_bot.keyboards import guest_menu, main_menu
+
+    guest = guest_menu()
+    assert guest.keyboard[0][0].request_contact is True
+    client = [b.text for row in main_menu({"is_client": True}).keyboard for b in row]
+    assert "💳 To‘lov" in client and "📝 Jurnal" not in client
+    staff = [b.text for row in main_menu({"is_client": False, "can_leads": False}).keyboard for b in row]
+    assert "📝 Jurnal" in staff and "📞 Lidlar" not in staff and "💳 To‘lov" not in staff

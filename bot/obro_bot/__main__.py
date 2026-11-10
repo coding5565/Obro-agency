@@ -22,6 +22,9 @@ COMMANDS = [
     BotCommand(command="syomka", description="Yaqin syomkalar"),
     BotCommand(command="lidlar", description="So‘nggi lidlar"),
     BotCommand(command="tolov", description="To‘lovlar (mijoz)"),
+    BotCommand(command="tariflar", description="Tariflar va narxlar"),
+    BotCommand(command="ariza", description="Ariza qoldirish"),
+    BotCommand(command="aloqa", description="Aloqa"),
     BotCommand(command="yordam", description="Yordam"),
     BotCommand(command="uzish", description="Botni akkauntdan uzish"),
 ]

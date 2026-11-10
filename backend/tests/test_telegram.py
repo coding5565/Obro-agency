@@ -251,3 +251,42 @@ class TestBotMenu:
         bot().post("/api/v1/bot/unlink/", {"chat_id": 9107}, format="json")
         token = url.rsplit("/kirish/", 1)[1]
         assert APIClient().post("/api/v1/auth/telegram/", {"token": token}, format="json").status_code == 400
+
+
+class TestBotGuests:
+    def test_link_by_phone(self, team):
+        response = bot().post("/api/v1/bot/link-phone/", {"chat_id": 9201, "phone": "998901110002"}, format="json")
+        assert response.status_code == 200 and response.data["full_name"] == "SMM"
+        team["smm"].refresh_from_db()
+        assert team["smm"].telegram_chat_id == 9201
+        assert bot().get("/api/v1/bot/status/", {"chat_id": 9201}).status_code == 200
+        unknown = bot().post("/api/v1/bot/link-phone/", {"chat_id": 9202, "phone": "+998 99 000 00 00"}, format="json")
+        assert unknown.status_code == 404
+
+    def test_inactive_user_cannot_link(self, team):
+        team["video"].is_active = False
+        team["video"].save()
+        response = bot().post("/api/v1/bot/link-phone/", {"chat_id": 9203, "phone": "+998901110003"}, format="json")
+        assert response.status_code == 404
+
+    def test_tariffs_text(self, db):
+        text = bot().get("/api/v1/bot/tariffs/", {"chat_id": 0}).data["text"]
+        assert "Mini" in text and "Premium" in text and "CRM" in text
+
+    def test_request_creates_lead_client_once_a_day(self, rahbar):
+        from apps.clients.models import Client
+
+        body = {"chat_id": 9204, "full_name": "Ali", "business": "Nur klinikasi", "phone": "901234567"}
+        first = bot().post("/api/v1/bot/request/", body, format="json")
+        assert first.status_code == 201 and first.data["created"] is True
+        assert bot().post("/api/v1/bot/request/", body, format="json").data["created"] is False
+        client = Client.objects.get(name="Nur klinikasi")
+        assert client.status == "lead" and client.contacts.get().phone == "+998901234567"
+        assert Notification.objects.filter(user=rahbar, kind="client.lead").exists()
+        bad = bot().post("/api/v1/bot/request/", {**body, "phone": "12"}, format="json")
+        assert bad.status_code == 400
+
+    def test_guest_endpoints_need_secret(self, db):
+        assert APIClient().get("/api/v1/bot/tariffs/", {"chat_id": 0}).status_code == 403
+        anonymous = APIClient().post("/api/v1/bot/link-phone/", {"chat_id": 1, "phone": "1"}, format="json")
+        assert anonymous.status_code == 403
