@@ -146,8 +146,35 @@ Persistent=true
 [Install]
 WantedBy=timers.target
 EOF
+cat > /etc/systemd/system/obro-panel-backup.service <<EOF
+[Unit]
+Description=OBRO' Panel kunlik baza nusxasi
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=obro
+Group=obro
+WorkingDirectory=$APP/backend
+EnvironmentFile=$ENV_FILE
+Environment=BACKUP_DIR=$ROOT/backups
+ExecStart=$VENV/bin/python manage.py backup_db
+EOF
+cat > /etc/systemd/system/obro-panel-backup.timer <<EOF
+[Unit]
+Description=OBRO' Panel baza nusxasi: har kuni 21:00 (Toshkent)
+
+[Timer]
+OnCalendar=*-*-* 21:00:00 Asia/Tashkent
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+mkdir -p "$ROOT/backups" && chown obro:obro "$ROOT/backups" && chmod 700 "$ROOT/backups"
 systemctl daemon-reload
 systemctl enable --now obro-panel-api >/dev/null
+systemctl enable --now obro-panel-backup.timer >/dev/null
 systemctl restart obro-panel-api
 systemctl enable --now obro-panel-reminders.timer >/dev/null
 

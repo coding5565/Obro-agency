@@ -20,3 +20,6 @@ frontend/dist/
 bot/.venv/
 bot/.env
 server_akkauntlar.txt
+backups/
+backend/backups/
+backup_token.txt
