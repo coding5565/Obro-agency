@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { get } from '../shared/api/client'
 import { useAuth } from '../shared/auth/AuthProvider'
+import { InstallApp } from '../shared/InstallApp'
 import { Logo } from '../shared/ui'
 
 export interface NavItem {
@@ -69,6 +70,7 @@ export function Shell({ nav, footer }: { nav: NavItem[]; footer?: ReactNode }) {
       </div>
       <div className="mt-6 border-t border-ink-3 pt-4">
         {footer && <div className="mb-3 px-1 text-[12px]">{footer}</div>}
+        <InstallApp look="sidebar" label="Telefonga o‘rnatish" className="mb-3" />
         <div className="flex items-center gap-1">
           <Link to={portal ? '/portal/profile' : '/app/profile'} onClick={() => setOpen(false)} title="Profil: Telegram va parol"
             className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-1 py-1 transition-colors hover:bg-ink-2">

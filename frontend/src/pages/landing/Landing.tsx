@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../../shared/auth/AuthProvider'
+import { InstallApp } from '../../shared/InstallApp'
 import { TargetMark } from '../../shared/ui/Logo'
 import './landing.css'
 
@@ -127,6 +128,9 @@ function Hero({ zoom, onPointer }: { zoom: React.RefObject<HTMLElement | null>; 
               <a href={TELEGRAM} target="_blank" rel="noreferrer" className="inline-flex min-h-[52px] items-center gap-2.5 rounded-full bg-white px-5 text-[15px] font-extrabold transition-transform duration-200 active:scale-[0.97] sm:min-h-14 sm:px-6">
                 <TelegramIcon size={18} />Telegram
               </a>
+            </div>
+            <div className="hero-in mt-2.5" style={{ '--d': '290ms' } as CSSProperties}>
+              <InstallApp look="ghost" label="Ilovani o‘rnatish" className="min-h-11! text-[14px]!" />
             </div>
           </div>
         </div>
@@ -454,6 +458,11 @@ function Contact() {
           </div>
         </Reveal>
         <Reveal className="mt-6">
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl bg-white/60 p-4">
+            <img src="/icon-192.png" alt="" width="52" height="52" className="rounded-xl" />
+            <div className="min-w-0 flex-1"><b className="block text-[15.5px]">OBRO ilovasi</b><span className="text-[13.5px] text-text-2">Kabinet telefoningizda alohida ilova bo‘lib ochiladi</span></div>
+            <InstallApp look="dark" label="O‘rnatish" />
+          </div>
           <div className="grid gap-2.5 sm:grid-cols-3">
             <a href={TELEGRAM} target="_blank" rel="noreferrer" className="flex min-h-[68px] items-center gap-3.5 rounded-2xl bg-ink p-4 text-ivory"><TelegramIcon /><span><b className="block text-[15px]">@im_ibrokhimov</b><span className="text-[12.5px] text-ivory/70">Telegram</span></span></a>
             <a href={INSTAGRAM} target="_blank" rel="noreferrer" className="flex min-h-[68px] items-center gap-3.5 rounded-2xl bg-white p-4"><InstagramIcon /><span><b className="block text-[15px]">@obroagency</b><span className="text-[12.5px] text-text-2">Instagram</span></span></a>
@@ -567,6 +576,7 @@ export function LandingPage() {
         {menu && (
           <nav className="border-t border-line-soft px-4 py-1.5 lg:hidden" aria-label="Mobil menyu">
             {NAV.map(([href, label]) => <a key={href} href={href} onClick={() => setMenu(false)} className="flex min-h-12 items-center justify-between text-[16px] font-bold">{label}<ArrowRight size={16} /></a>)}
+            <InstallApp look="dark" label="Ilovani o‘rnatish" className="my-2 w-full" />
           </nav>
         )}
       </header>

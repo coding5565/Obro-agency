@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { useAuth } from '../shared/auth/AuthProvider'
+import { InstallApp } from '../shared/InstallApp'
 import { Button, ErrorBox, Field, Input, Logo } from '../shared/ui'
 
 // Slayddagi muqova uslubi: qora fon, katta oltin nishon, «OBRO» oltin, «AGENCY» och rangda.
@@ -86,7 +87,10 @@ export function LoginPage({ door = 'client' }: { door?: keyof typeof DOORS }) {
           <ErrorBox error={error} />
           <Button type="submit" className="w-full min-h-11" disabled={busy}>{busy ? 'Kirilmoqda…' : 'Kirish'}</Button>
           <p className="text-[12.5px] text-muted">{copy.note}</p>
-          <Link to="/" className="inline-flex min-h-9 items-center text-[13px] font-semibold text-bronze">← Bosh sahifaga qaytish</Link>
+          <div className="flex flex-wrap items-center justify-between gap-x-4">
+            <Link to="/" className="inline-flex min-h-9 items-center text-[13px] font-semibold text-bronze">← Bosh sahifaga qaytish</Link>
+            <InstallApp look="link" label="Telefonga o‘rnatish" />
+          </div>
         </form>
       </div>
     </div>

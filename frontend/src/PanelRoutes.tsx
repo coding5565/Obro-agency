@@ -55,6 +55,14 @@ function Need({ perm, children }: { perm: string; children: ReactNode }) {
   return <>{children}</>
 }
 
+// Telefondagi ilova shu manzildan ochiladi.
+function AppLaunch() {
+  const { user, loading } = useAuth()
+  if (loading) return <Spinner />
+  if (!user) return <Navigate to="/login" replace />
+  return <Navigate to={user.is_client ? '/portal' : '/app'} replace />
+}
+
 export default function PanelRoutes() {
   useEffect(() => { document.title = 'OBRO’ Panel' }, [])
   return (
@@ -63,6 +71,7 @@ export default function PanelRoutes() {
       <Route path="jamoa" element={<LoginPage door="staff" />} />
       <Route path="invite/:token" element={<AcceptInvitePage />} />
       <Route path="kirish/:token" element={<TelegramLoginPage />} />
+      <Route path="ilova" element={<AppLaunch />} />
         <Route path="app" element={<Guard kind="staff"><StaffLayout /></Guard>}>
           <Route index element={<DashboardPage />} />
           <Route path="clients" element={<Need perm="clients.view"><ClientsPage /></Need>} />
