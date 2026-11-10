@@ -88,8 +88,8 @@ def test_deactivated_user_loses_access(rahbar, team):
 
 def test_own_profile_but_not_login_or_role(team):
     api = api_for(team["video"])
-    response = api.patch("/api/v1/auth/me/", {"full_name": "  Yangi   Ism ", "email": "a@b.uz", "phone": "+998900000000",
-                                              "role": access.RAHBAR}, format="json")
+    response = api.patch("/api/v1/auth/me/", {"full_name": "  Yangi   Ism ", "email": "a@b.uz",
+                                              "phone": "+998900000000", "role": access.RAHBAR}, format="json")
     assert response.status_code == 200
     team["video"].refresh_from_db()
     assert team["video"].full_name == "Yangi Ism" and team["video"].email == "a@b.uz"

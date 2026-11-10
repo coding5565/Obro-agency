@@ -181,6 +181,10 @@ server {
 }
 EOF
 ln -sf /etc/nginx/sites-available/obro-panel /etc/nginx/sites-enabled/obro-panel
+# certbot sertifikat qo'shgan bo'lsa, yangilanishda yo'qolmasin.
+if [ -n "${CERT_DOMAIN:-}" ] && [ -d "/etc/letsencrypt/live/$CERT_DOMAIN" ] && command -v certbot >/dev/null; then
+  certbot install --nginx --cert-name "$CERT_DOMAIN" -d "$CERT_DOMAIN" -d "www.$CERT_DOMAIN" --redirect --non-interactive >/dev/null 2>&1 || true
+fi
 nginx -t
 systemctl reload nginx
 
