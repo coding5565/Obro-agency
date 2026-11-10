@@ -113,17 +113,22 @@ def test_payroll_rules_list_has_clean_titles(rahbar):
     assert rows and all(row["project_title"] is None for row in rows)
 
 
-def test_basic_client_has_no_worklog_section(team):
+def test_every_tariff_has_crm_but_disabled_section_stays_closed(team):
+    from apps.catalog.models import BASIC_FEATURES
     from tests.conftest import make_project
 
-    basic = make_project("Kafe C", "basic", team)
+    mini = make_project("Kafe C", "mini", team)
     owner = make_user("+998901110012", access.CLIENT_OWNER)
-    ClientMembership.objects.create(user=owner, client=basic.client)
+    ClientMembership.objects.create(user=owner, client=mini.client)
     api = api_for(owner)
+    assert mini.tariff_version.price == 300
+    assert api.get("/api/v1/portal/worklog/").status_code == 200
+    assert api.get("/api/v1/portal/metrics/").status_code == 200
+    # Rahbar tarifdan bo'limni olib tashlasa, mijozga yopiladi.
+    mini.tariff_version.panel_features = BASIC_FEATURES
+    mini.tariff_version.save()
     assert api.get("/api/v1/portal/calendar/").status_code == 200
-    assert api.get("/api/v1/portal/invoices/").status_code == 200
     assert api.get("/api/v1/portal/worklog/").status_code == 403
-    assert api.get("/api/v1/portal/metrics/").status_code == 403
 
 
 def test_invite_flow_creates_client_owner(rahbar, project):

@@ -17,14 +17,19 @@ const NAV: [string, string][] = [['#tariflar', 'Tariflar'], ['#jarayon', 'Jarayo
 
 const ABOUT = 'Kontent, dizayn va reklamani bitta tizimda boshqaramiz. Har bir biznes uchun alohida strategiya, oldindan tuzilgan reja va doimiy tahlil.'
 
-type TierName = 'Basic' | 'Standard' | 'Premium'
+type TierName = 'Mini' | 'Lite' | 'Basic' | 'Standard' | 'Premium'
 
-interface Tier { name: TierName; price: number; post: number; stories: number; reels: number; extras: string[]; bonus: boolean; stage: string; forWhom: string }
+interface Tier { name: TierName; price: number; post: number; stories: number; reels: number; extras: string[]; studio: boolean; stage: string; forWhom: string }
+
+const TARGET = 'Target reklama sozlamalari'
+const PLAN = '1 oylik kontent-reja'
 
 const TIERS: Tier[] = [
-  { name: 'Basic', price: 800, post: 4, stories: 15, reels: 10, extras: ['Target reklama sozlamalari', '1 oylik kontent-reja'], bonus: false, stage: 'Endi boshlayapman', forWhom: 'Yangi bizneslar, shaxsiy brendlar va ijtimoiy tarmoqlarini tartibga keltirmoqchi bo‘lgan kompaniyalar uchun.' },
-  { name: 'Standard', price: 1000, post: 6, stories: 20, reels: 12, extras: ['Profilni optimallashtirish', 'Target reklama sozlamalari', '1 oylik kontent-reja'], bonus: true, stage: 'Rivojlanyapman', forWhom: 'Faoliyatini tizimli yo‘lga qo‘yishni, brend imijini yaxshilashni va sifatli kontent orqali yangi mijozlarni jalb qilishni istagan bizneslar uchun.' },
-  { name: 'Premium', price: 1500, post: 10, stories: 20, reels: 15, extras: ['Profil va brend tahlili', 'Target reklama sozlamalari', '1 oylik kontent-reja'], bonus: true, stage: 'Bozorda kuchayaman', forWhom: 'Marketingga jiddiy investitsiya qilayotgan, bozordagi o‘rnini kuchaytirish va tizimli rivojlanishni maqsad qilgan bizneslar uchun.' },
+  { name: 'Mini', price: 300, post: 4, stories: 8, reels: 8, extras: [PLAN], studio: false, stage: 'Ilk qadam', forWhom: 'Ijtimoiy tarmoqlarda ilk qadamni qo‘yayotgan kichik bizneslar va yakka tadbirkorlar uchun.' },
+  { name: 'Lite', price: 500, post: 6, stories: 10, reels: 10, extras: [TARGET, PLAN], studio: false, stage: 'Sinab ko‘raman', forWhom: 'Sahifasini muntazam yuritishni va reklamani sinab ko‘rishni boshlamoqchi bo‘lgan kichik bizneslar uchun.' },
+  { name: 'Basic', price: 800, post: 8, stories: 15, reels: 12, extras: [TARGET, PLAN], studio: false, stage: 'Tartibga solaman', forWhom: 'Yangi bizneslar, shaxsiy brendlar va ijtimoiy tarmoqlarini tartibga keltirmoqchi bo‘lgan kompaniyalar uchun.' },
+  { name: 'Standard', price: 1000, post: 10, stories: 20, reels: 14, extras: ['Profilni optimallashtirish', TARGET, PLAN], studio: true, stage: 'Rivojlanyapman', forWhom: 'Faoliyatini tizimli yo‘lga qo‘yishni, brend imijini yaxshilashni va sifatli kontent orqali yangi mijozlarni jalb qilishni istagan bizneslar uchun.' },
+  { name: 'Premium', price: 1500, post: 12, stories: 20, reels: 16, extras: ['Profil va brend tahlili', TARGET, PLAN], studio: true, stage: 'Bozorda kuchayaman', forWhom: 'Marketingga jiddiy investitsiya qilayotgan, bozordagi o‘rnini kuchaytirish va tizimli rivojlanishni maqsad qilgan bizneslar uchun.' },
 ]
 
 const STEPS: [string, string][] = [
@@ -46,7 +51,7 @@ const FAQ: [string, string][] = [
   ['Reklama budjeti narxga kiradimi?', 'Yo‘q. Target reklama budjeti paket narxiga kirmaydi va alohida kelishiladi.'],
   ['Syomka, model va lokatsiya paketga kiradimi?', 'Alohida kelishilmagan bo‘lsa, suratga olish kunlari, model, lokatsiya va qo‘shimcha xarajatlar paket tarkibiga kirmaydi.'],
   ['Savdo sonini kafolatlaysizmi?', 'Muayyan savdo yoki lidlar soni kafolatlanmaydi. Natija biznes sohasi, taklif sifati, auditoriya va reklama budjetiga bog‘liq. Biz buni ochiq aytamiz.'],
-  ['Ish qanday ketayotganini qayerdan ko‘raman?', 'Standard va Premium tariflarda CRM kabinet beriladi: bajarilayotgan ishlar va hisobotlarni istalgan vaqtda ko‘rib turasiz.'],
+  ['Ish qanday ketayotganini qayerdan ko‘raman?', 'Barcha tariflarda CRM kabinet beriladi: bajarilayotgan ishlar, tasdiqlash va hisobotlarni istalgan vaqtda ko‘rib turasiz.'],
 ]
 
 function telegramFor(plan: string) {
@@ -168,7 +173,7 @@ function spread(count: number, offset: number) {
 
 function MonthPlanner() {
   const [name, setName] = useState<TierName>('Standard')
-  const tier = TIERS.find((t) => t.name === name) ?? TIERS[1]
+  const tier = TIERS.find((t) => t.name === name) ?? TIERS[3]
   const days = useMemo(() => {
     const reels = spread(tier.reels, 0.3)
     const posts = spread(tier.post, 0.6)
@@ -181,11 +186,11 @@ function MonthPlanner() {
       <Reveal>
         <Kicker>Smart Start · Oylik paketlar</Kicker>
         <h2 className="display text-[clamp(32px,8.6vw,64px)]">Bir oyingiz <span className="mark">qanday ko‘rinadi?</span></h2>
-        <p className="mt-4 max-w-[560px] text-[16.5px] leading-relaxed text-text-2">Biznesingiz qaysi bosqichda? Tanlang, oylik reja o‘sha zahoti o‘zgaradi.</p>
+        <p className="mt-4 max-w-[560px] text-[16.5px] leading-relaxed text-text-2">5 ta paket, kichikdan kattagacha. Biznesingiz qaysi bosqichda? Tanlang, oylik reja o‘sha zahoti o‘zgaradi.</p>
       </Reveal>
 
       <Reveal className="mt-7">
-        <div role="tablist" aria-label="Tarif tanlash" className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div role="tablist" aria-label="Tarif tanlash" className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
           {TIERS.map((t) => {
             const on = t.name === name
             return (
@@ -239,9 +244,13 @@ function MonthPlanner() {
               {[`${tier.post} ta post dizayni va matn`, `${tier.stories} ta Stories`, `${tier.reels} ta Reels`, ...tier.extras].map((line) => (
                 <li key={line} className="flex items-start gap-2.5"><span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-gold"><Check size={12} strokeWidth={3.5} /></span>{line}</li>
               ))}
-              <li className={`flex items-start gap-2.5 ${tier.bonus ? '' : 'opacity-65'}`}>
-                <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-gold">{tier.bonus ? <Check size={12} strokeWidth={3.5} /> : <X size={12} strokeWidth={3.5} />}</span>
-                {tier.bonus ? 'Bonus: studiya va CRM kabinet' : 'Studiya va CRM Standard hamda Premium’da'}
+              <li className="flex items-start gap-2.5">
+                <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-gold"><Check size={12} strokeWidth={3.5} /></span>
+                CRM kabinet: ish va hisobotlar doim ko‘z oldingizda
+              </li>
+              <li className={`flex items-start gap-2.5 ${tier.studio ? '' : 'opacity-65'}`}>
+                <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-gold">{tier.studio ? <Check size={12} strokeWidth={3.5} /> : <X size={12} strokeWidth={3.5} />}</span>
+                {tier.studio ? 'Bonus: studiya' : 'Studiya bonusi Standard va Premium’da'}
               </li>
             </ul>
             <a href={telegramFor(tier.name)} target="_blank" rel="noreferrer" className="mt-auto inline-flex min-h-[54px] translate-y-0 items-center justify-center gap-2.5 rounded-full bg-ink px-6 text-[15.5px] font-extrabold text-ivory transition-transform duration-200 active:scale-[0.97] max-lg:mt-6 lg:mt-6">

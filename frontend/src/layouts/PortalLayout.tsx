@@ -5,7 +5,7 @@ import type { NavItem } from './Shell'
 import { get } from '../shared/api/client'
 import { useAuth } from '../shared/auth/AuthProvider'
 
-const LOCKED = 'Standard tarifida ochiladi'
+const LOCKED = 'Tarifingizda yoqilmagan'
 
 export function PortalLayout() {
   const { user } = useAuth()

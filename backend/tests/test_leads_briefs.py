@@ -130,10 +130,14 @@ class TestAccess:
         assert "raw" not in data["results"][0] and "assigned_to" not in data["results"][0]
         assert api.patch(f"/api/v1/portal/leads/{other}/", {"status": "won"}, format="json").status_code == 404
 
-    def test_basic_tariff_client_has_no_leads(self, team):
+    def test_leads_closed_when_tariff_has_no_leads(self, team):
         project = make_project("Kichik", "basic", team)
         user = make_user("+998901119999", "client_owner")
         project.client.memberships.create(user=user)
+        assert api_for(user).get("/api/v1/portal/leads/").status_code == 200
+        version = project.tariff_version
+        version.panel_features = [f for f in version.panel_features if f != "leads"]
+        version.save()
         assert api_for(user).get("/api/v1/portal/leads/").status_code == 403
         # Syomka har qanday tarifda ko'rinadi.
         assert api_for(user).get("/api/v1/portal/shoots/").status_code == 200

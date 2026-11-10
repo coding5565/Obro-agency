@@ -35,14 +35,30 @@ POSITIONS = [
     (Position.FREELANCER, "Frilanser", False, 5),
 ]
 
-# OBRO Agency — Tijoriy taklif (2026-yil 25-oktabr)
+# OBRO Agency — Tijoriy taklif. Narx yoki tarkib o'zgarsa, eski versiya o'chirilmaydi: yangi sana bilan
+# yangisi qo'shiladi, eski loyihalar o'z versiyasida qoladi.
+# 2026-11-01 dan 5 ta tarif, CRM kabinet hamma tariflarda.
+OFFER_2026_11 = date(2026, 11, 1)
+PREMIUM_FEATURES = FULL_FEATURES + ["weekly_review"]
 TARIFFS = [
-    ("basic", "Basic", "Yangi bizneslar va shaxsiy brendlar uchun", Decimal("800"),
-     {"post": 4, "stories": 15, "reels": 10}, BASIC_FEATURES),
-    ("standard", "Standard", "Rivojlanayotgan bizneslar uchun. Bonus: studiya + CRM", Decimal("1000"),
-     {"post": 6, "stories": 20, "reels": 12}, FULL_FEATURES),
-    ("premium", "Premium", "Marketingga jiddiy investitsiya qilayotganlar uchun. Bonus: studiya + CRM",
-     Decimal("1500"), {"post": 10, "stories": 20, "reels": 15}, FULL_FEATURES + ["weekly_review"]),
+    ("mini", "Mini", "Ilk qadam: kichik bizneslar va yakka tadbirkorlar uchun", [
+        (OFFER_2026_11, Decimal("300"), {"post": 4, "stories": 8, "reels": 8}, FULL_FEATURES),
+    ]),
+    ("lite", "Lite", "Sahifani muntazam yuritish va reklamani sinab ko‘rish uchun", [
+        (OFFER_2026_11, Decimal("500"), {"post": 6, "stories": 10, "reels": 10}, FULL_FEATURES),
+    ]),
+    ("basic", "Basic", "Yangi bizneslar va shaxsiy brendlar uchun", [
+        (RULES_VALID_FROM, Decimal("800"), {"post": 4, "stories": 15, "reels": 10}, BASIC_FEATURES),
+        (OFFER_2026_11, Decimal("800"), {"post": 8, "stories": 15, "reels": 12}, FULL_FEATURES),
+    ]),
+    ("standard", "Standard", "Rivojlanayotgan bizneslar uchun. Bonus: studiya", [
+        (RULES_VALID_FROM, Decimal("1000"), {"post": 6, "stories": 20, "reels": 12}, FULL_FEATURES),
+        (OFFER_2026_11, Decimal("1000"), {"post": 10, "stories": 20, "reels": 14}, FULL_FEATURES),
+    ]),
+    ("premium", "Premium", "Marketingga jiddiy investitsiya qilayotganlar uchun. Bonus: studiya", [
+        (RULES_VALID_FROM, Decimal("1500"), {"post": 10, "stories": 20, "reels": 15}, PREMIUM_FEATURES),
+        (OFFER_2026_11, Decimal("1500"), {"post": 12, "stories": 20, "reels": 16}, PREMIUM_FEATURES),
+    ]),
 ]
 
 PAY_RULES = [(Position.SMM_TARGET, Decimal("20")), (Position.VIDEO_MOBILO, Decimal("12.5")),
@@ -84,16 +100,17 @@ class Command(BaseCommand):
         return result
 
     def _tariffs(self):
-        for sort, (code, name, description, price, limits, features) in enumerate(TARIFFS, start=1):
+        for sort, (code, name, description, versions) in enumerate(TARIFFS, start=1):
             tariff, _ = Tariff.objects.update_or_create(
                 code=code, defaults={"name": name, "description": description, "sort": sort})
-            version, created = TariffVersion.objects.get_or_create(
-                tariff=tariff, valid_from=RULES_VALID_FROM,
-                defaults={"price": price, "currency": "USD", "panel_features": features, "revisions_per_item": 2},
-            )
-            if created:
-                TariffLimit.objects.bulk_create(
-                    [TariffLimit(version=version, content_kind=k, quantity=v) for k, v in limits.items()])
+            for valid_from, price, limits, features in versions:
+                version, created = TariffVersion.objects.get_or_create(
+                    tariff=tariff, valid_from=valid_from,
+                    defaults={"price": price, "currency": "USD", "panel_features": features, "revisions_per_item": 2},
+                )
+                if created:
+                    TariffLimit.objects.bulk_create(
+                        [TariffLimit(version=version, content_kind=k, quantity=v) for k, v in limits.items()])
 
     def _rules(self, positions):
         for code, percent in PAY_RULES:

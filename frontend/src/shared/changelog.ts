@@ -8,6 +8,16 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.7',
+    date: '2026-11-10',
+    title: '5 ta tarif va hamma uchun CRM',
+    changes: [
+      { area: 'Tariflar', items: ['Yangi tariflar: Mini ($300) va Lite ($500)', 'Basic, Standard va Premium tarkibi yangi taklifga moslandi (01.11.2026 dan)', 'Eski loyihalar o‘z tarifi versiyasida qoladi'] },
+      { area: 'Mijoz kabineti', items: ['CRM kabinet barcha tariflarda to‘liq ochiq', 'Studiya bonusi Standard va Premium’da'] },
+      { area: 'Sayt', items: ['Landing 5 ta tarifga moslandi'] },
+    ],
+  },
+  {
     version: '1.6',
     date: '2026-11-10',
     title: 'Yangi server va profil',
