@@ -3,13 +3,14 @@ from django.db import models
 
 TODO = "todo"
 IN_PROGRESS = "in_progress"
+REVIEW = "review"
 DONE = "done"
 CANCELLED = "cancelled"
 
 
 class Task(models.Model):
-    STATUS_CHOICES = [(TODO, "Bajarilishi kerak"), (IN_PROGRESS, "Jarayonda"), (DONE, "Bajarildi"),
-                      (CANCELLED, "Bekor qilindi")]
+    STATUS_CHOICES = [(TODO, "Bajarilishi kerak"), (IN_PROGRESS, "Jarayonda"), (REVIEW, "Tekshiruvda"),
+                      (DONE, "Bajarildi"), (CANCELLED, "Bekor qilindi")]
     PRIORITY_CHOICES = [("low", "Past"), ("normal", "Oddiy"), ("high", "Yuqori")]
 
     project = models.ForeignKey("clients.Project", on_delete=models.CASCADE, related_name="tasks")
@@ -33,3 +34,15 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class TaskComment(models.Model):
+    """Vazifa ostidagi izoh: SMM menejer va ishchi shu yerda gaplashadi."""
+
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]

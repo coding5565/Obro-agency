@@ -8,6 +8,16 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.11',
+    date: '2026-11-10',
+    title: 'Vazifalar doskasi (Trello uslubida)',
+    changes: [
+      { area: 'Vazifalar', items: ['Doska: Qilinadi → Jarayonda → Tekshiruvda → Bajarildi ustunlari, kartochkani sudrab o‘tkazish (telefonda bosib turib suriladi)', '«Xodimlar bo‘yicha» ko‘rinish: kimda qancha ish borligi ko‘rinadi, kartochkani boshqa odamga sudrab berish mumkin', 'Har ustun ostida «Kartochka qo‘shish»', 'Mijoz va xodim bo‘yicha filtr'] },
+      { area: 'Kartochka ichida', items: ['Tafsilot, muddat, muhimlik, kimga berilgani', 'Izohlar: SMM menejer va ishchi shu yerda gaplashadi'] },
+      { area: 'Xabarlar', items: ['Ishchiga vazifa berilsa, darhol xabar boradi (panel va Telegram)', 'Ishchi «Tekshiruvda»ga o‘tkazsa, vazifa bergan odamga xabar boradi', 'Qabul qilinsa yoki qaytarilsa, yangi izoh yozilsa ham xabar boradi'] },
+    ],
+  },
+  {
     version: '1.10',
     date: '2026-11-10',
     title: 'Sodda va bog‘langan panel',

@@ -129,6 +129,11 @@ def _alerts(user, projects, today):
     if today_tasks:
         add("warn", f"Bugungi vazifalar: {today_tasks} ta", "/app/tasks", today_tasks)
 
+    if user.has_obro_perm(access.TASKS_MANAGE):
+        review = tm.Task.objects.filter(project__in=projects, status=tm.REVIEW).count()
+        if review:
+            add("warn", f"Tekshirish kutayotgan vazifalar: {review} ta", "/app/tasks", review)
+
     tomorrow = today + timedelta(days=1)
     shoots = cm.ShootDay.objects.filter(project__in=projects, status="planned", date__in=[today, tomorrow])
     if not user.has_obro_perm(access.CONTENT_MANAGE):

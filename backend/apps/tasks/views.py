@@ -1,4 +1,6 @@
-from django.db.models import Q
+from datetime import timedelta
+
+from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
@@ -6,7 +8,7 @@ from rest_framework.response import Response
 
 from apps.clients.selectors import visible_projects
 from apps.tasks import models as tm
-from apps.tasks.services import set_task_status
+from apps.tasks.services import add_comment, announce_assigned, set_task_status
 from common import access
 from common.permissions import ObroPermission
 
@@ -16,14 +18,16 @@ class TaskSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="project.client.name", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     content_title = serializers.CharField(source="content_item.title", read_only=True, default=None)
+    created_by_name = serializers.CharField(source="created_by.full_name", read_only=True, default=None)
+    comment_count = serializers.IntegerField(read_only=True, default=0)
     is_overdue = serializers.SerializerMethodField()
 
     class Meta:
         model = tm.Task
         fields = ["id", "project", "client_name", "content_item", "content_title", "title", "description",
                   "assignee", "assignee_name", "position", "due_date", "status", "status_label", "priority",
-                  "is_overdue", "created_at", "completed_at"]
-        read_only_fields = ["completed_at"]
+                  "is_overdue", "created_at", "completed_at", "created_by", "created_by_name", "comment_count"]
+        read_only_fields = ["completed_at", "created_by"]
 
     def get_is_overdue(self, task):
         return bool(task.due_date and task.status in (tm.TODO, tm.IN_PROGRESS)
@@ -35,25 +39,53 @@ class TaskSerializer(serializers.ModelSerializer):
         return project
 
 
+class TaskCommentSerializer(serializers.ModelSerializer):
+    author_name = serializers.CharField(source="author.full_name", read_only=True)
+
+    class Meta:
+        model = tm.TaskComment
+        fields = ["id", "author", "author_name", "body", "created_at"]
+        read_only_fields = ["author"]
+
+
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [ObroPermission]
     required_perms = {"read": access.TASKS_VIEW, "write": access.TASKS_MANAGE, "my": access.TASKS_VIEW,
-                      "set_status": access.TASKS_VIEW}
+                      "set_status": access.TASKS_VIEW, "comments": access.TASKS_VIEW}
     filterset_fields = ["project", "project__client", "assignee", "status", "content_item"]
     search_fields = ["title"]
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
         user = self.request.user
-        qs = tm.Task.objects.select_related("project__client", "assignee", "content_item")
+        qs = (tm.Task.objects.select_related("project__client", "assignee", "content_item", "created_by")
+              .annotate(comment_count=Count("comments")).order_by("due_date", "id"))
         qs = qs.filter(project__in=visible_projects(user))
         if not user.has_obro_perm(access.TASKS_MANAGE):
             qs = qs.filter(Q(assignee=user) | Q(assignee__isnull=True))
+        if self.request.query_params.get("board"):
+            # Doska: bekor qilinganlar ko'rinmaydi, bajarilganlardan faqat oxirgi 14 kun.
+            since = timezone.now() - timedelta(days=14)
+            qs = qs.exclude(status=tm.CANCELLED).exclude(status=tm.DONE, completed_at__lt=since)
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        announce_assigned(serializer.save(created_by=self.request.user), self.request.user)
+
+    def perform_update(self, serializer):
+        before = serializer.instance.assignee_id
+        task = serializer.save()
+        if task.assignee_id != before:
+            announce_assigned(task, self.request.user)
+
+    @action(detail=True, methods=["get", "post"])
+    def comments(self, request, pk=None):
+        task = self.get_object()
+        if request.method == "POST":
+            comment = add_comment(task, request.data.get("body"), by=request.user)
+            return Response(TaskCommentSerializer(comment).data, status=201)
+        return Response(TaskCommentSerializer(task.comments.select_related("author"), many=True).data)
 
     @action(detail=False, methods=["get"])
     def my(self, request):

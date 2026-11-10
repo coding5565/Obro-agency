@@ -231,6 +231,9 @@ export interface Task {
   status_label: string
   priority: string
   is_overdue: boolean
+  created_by?: number | null
+  created_by_name?: string | null
+  comment_count?: number
 }
 
 export interface WorkLogEntry {
