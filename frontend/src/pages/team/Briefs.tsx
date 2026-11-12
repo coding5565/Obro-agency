@@ -5,8 +5,8 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { get, patch, post } from '../../shared/api/client'
 import type { Page } from '../../shared/api/types'
 import { useAuth } from '../../shared/auth/AuthProvider'
-import { date, dateTime } from '../../shared/lib/format'
-import { Badge, Button, Card, Empty, ErrorBox, Field, Input, Kicker, Modal, PageHeader, Select, Spinner, StatusBadge, Table, Tabs, Textarea } from '../../shared/ui'
+import { date, dateTime, today } from '../../shared/lib/format'
+import { Badge, Button, Card, Empty, ErrorBox, Field, Input, Kicker, Modal, PageHeader, Select, Spinner, StatusBadge, Table, Tabs, Textarea, TimeSelect } from '../../shared/ui'
 import { useActiveProjects } from './Content'
 
 interface Shot { text: string; done: boolean }
@@ -134,7 +134,14 @@ function BriefForm({ onClose, initial, brief }: { onClose: () => void; initial?:
         </div>
         <Field label="Nima qilinadi"><Input value={form.title} onChange={set('title')} placeholder="Masalan: Bahor aksiyasi uchun Reels" required /></Field>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Muddat"><Input type="datetime-local" value={form.deadline} onChange={set('deadline')} /></Field>
+          <Field label="Muddat (sana va soat)">
+            <div className="grid grid-cols-[1fr_104px] gap-2">
+              <Input type="date" value={form.deadline.slice(0, 10)} aria-label="Muddat sanasi"
+                onChange={(e) => setForm({ ...form, deadline: e.target.value ? `${e.target.value}T${form.deadline.slice(11, 16) || '18:00'}` : '' })} />
+              <TimeSelect value={form.deadline.slice(11, 16) || '18:00'} aria-label="Muddat soati"
+                onChange={(time) => setForm({ ...form, deadline: `${form.deadline.slice(0, 10) || today()}T${time}` })} />
+            </div>
+          </Field>
           <Field label="Format"><Input value={form.format} onChange={set('format')} placeholder="9:16, 30 soniya" /></Field>
           <Field label="Joy"><Input value={form.location} onChange={set('location')} /></Field>
           <Field label="Kadrda kim"><Input value={form.talent} onChange={set('talent')} placeholder="Masalan: shifokor Aziza" /></Field>

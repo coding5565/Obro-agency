@@ -12,7 +12,7 @@ export const RELEASES: Release[] = [
     date: '2026-11-12',
     title: 'Kontent rejasida TZ, hisob va ranglar',
     changes: [
-      { area: 'Yangi kontent', items: ['Har bosqichga (ssenariy, suratga olish, montaj) kim qilishini va muddatini shu oynaning o‘zida tanlash', '«+ TZ» tugmasi: TZ shu yerda yoziladi va ijrochiga darhol yuboriladi', 'TZ muddatiga soat ham tanlanadi (odatda 18:00)'] },
+      { area: 'Yangi kontent', items: ['Har bosqichga (ssenariy, suratga olish, montaj) kim qilishini va muddatini shu oynaning o‘zida tanlash', '«+ TZ» tugmasi: TZ shu yerda yoziladi va ijrochiga darhol yuboriladi', 'TZ muddatiga soat ham tanlanadi (odatda 18:00): sana yonidagi ro‘yxatdan, TZ sahifasida ham'] },
       { area: 'Kontent reja', items: ['Shu oy nechta Reels, Post (karusel), Stories va jami qo‘yilgani, tarif bo‘yicha yana nechta kerakligi', 'Ranglar: yashil — tayyor/joylandi, sariq — jarayonda, qizil — boshlanmagan, to‘q qizil — muddati o‘tgan', 'Ishchi vazifani boshlasa, kontent o‘zi «jarayonda»ga o‘tadi'] },
     ],
   },

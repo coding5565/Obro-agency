@@ -119,6 +119,18 @@ export function Select({ children, ...props }: SelectHTMLAttributes<HTMLSelectEl
   return <select {...props} className={cn(INPUT, 'cursor-pointer pr-8', props.className)}>{children}</select>
 }
 
+// Soat tanlash: har brauzer va telefonda bir xil ishlaydigan oddiy ro'yxat (07:00–23:30, yarim soat qadam).
+const TIMES = Array.from({ length: 34 }, (_, i) => `${String(7 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`)
+
+export function TimeSelect({ value, onChange, className, ...props }: Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange' | 'value'> & { value: string; onChange: (value: string) => void }) {
+  const options = TIMES.includes(value) || !value ? TIMES : [...TIMES, value].sort()
+  return (
+    <Select value={value} onChange={(e) => onChange(e.target.value)} className={className} {...props}>
+      {options.map((t) => <option key={t} value={t}>{t}</option>)}
+    </Select>
+  )
+}
+
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea rows={3} {...props} className={cn(INPUT, 'leading-relaxed', props.className)} />
 }

@@ -7,7 +7,7 @@ import { get, post } from '../../shared/api/client'
 import type { ContentItem, Page, Project } from '../../shared/api/types'
 import { useAuth } from '../../shared/auth/AuthProvider'
 import { monthKey, monthLabel, shiftMonth, today } from '../../shared/lib/format'
-import { Button, Card, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, StatusBadge, Tabs, Textarea } from '../../shared/ui'
+import { Button, Card, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, StatusBadge, Tabs, Textarea, TimeSelect } from '../../shared/ui'
 
 const WEEKDAYS = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya']
 const COLUMNS: [string, string][] = [['idea', 'Reja'], ['script', 'Ssenariy'], ['shooting', 'Suratga olish'], ['editing', 'Tayyorlash'],
@@ -258,7 +258,7 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
                 if (!step) return null
                 return (
                   <div key={r.position} className="rounded-xl bg-white p-2.5">
-                    <div className="grid grid-cols-[1fr_auto] items-end gap-2 sm:grid-cols-[120px_1fr_150px_auto]">
+                    <div className="grid grid-cols-[1fr_auto] items-end gap-2 sm:grid-cols-[110px_1fr_140px_96px_auto]">
                       <div className="col-span-2 text-[13px] font-semibold sm:col-span-1 sm:self-center">{r.label}</div>
                       <Select value={step.assignee} onChange={(e) => update(r.position, { assignee: e.target.value })} aria-label={`${r.label}: kim qiladi`}>
                         <option value="">Biriktirilmagan</option>
@@ -266,6 +266,8 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
                       </Select>
                       <Input type="date" value={step.due_date} onChange={(e) => update(r.position, { due_date: e.target.value })}
                         aria-label={`${r.label}: muddat`} title="Muddat (bo‘sh bo‘lsa — joylash sanasi)" className="hidden sm:block" />
+                      <TimeSelect value={step.due_time} onChange={(due_time) => update(r.position, { due_time })}
+                        aria-label={`${r.label}: soat`} title="Soat" className="hidden sm:block" />
                       <button type="button" onClick={() => update(r.position, { open: !step.open })}
                         className={clsx('h-11 rounded-xl border px-3 text-[12.5px] font-bold whitespace-nowrap',
                           step.tz.trim() ? 'border-gold bg-gold-soft text-gold-ink' : 'border-line bg-white text-text-2 hover:border-ink')}>
@@ -274,10 +276,9 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
                     </div>
                     {step.open && (
                       <div className="mt-2 space-y-2">
-                        <div className="grid grid-cols-[1fr_120px] gap-2 sm:flex sm:items-center">
-                          <Input type="date" value={step.due_date} onChange={(e) => update(r.position, { due_date: e.target.value })} aria-label={`${r.label}: muddat`} className="sm:hidden" />
-                          <span className="hidden text-[12.5px] font-semibold text-muted sm:inline">TZ muddati: {step.due_date ? step.due_date.split('-').reverse().join('.') : 'joylash sanasi'}, soat</span>
-                          <Input type="time" value={step.due_time} onChange={(e) => update(r.position, { due_time: e.target.value })} aria-label={`${r.label}: TZ soati`} className="sm:!w-[120px]" />
+                        <div className="grid grid-cols-[1fr_104px] gap-2 sm:hidden">
+                          <Input type="date" value={step.due_date} onChange={(e) => update(r.position, { due_date: e.target.value })} aria-label={`${r.label}: muddat`} />
+                          <TimeSelect value={step.due_time} onChange={(due_time) => update(r.position, { due_time })} aria-label={`${r.label}: soat`} />
                         </div>
                         <Textarea rows={3} value={step.tz} onChange={(e) => update(r.position, { tz: e.target.value })} autoFocus
                           placeholder="TZ: nima qilish kerak, kadrlar, format (9:16, 30 soniya), namunalar…" aria-label={`${r.label}: TZ`} />
