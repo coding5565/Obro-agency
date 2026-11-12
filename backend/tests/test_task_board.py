@@ -90,7 +90,7 @@ class TestContentWithTz:
             "steps": [
                 {"position": "smm_target", "assignee": smm.pk},
                 {"position": "video_mobilo", "assignee": video.pk, "due_date": str(day - timedelta(days=1)),
-                 "tz": "3 ta kadr: kirish, xizmat, aksiya. 9:16, 30 soniya"},
+                 "due_time": "10:30", "tz": "3 ta kadr: kirish, xizmat, aksiya. 9:16, 30 soniya"},
                 {"position": "design_montage", "assignee": None},
             ]}, format="json")
         assert res.status_code == 201, res.data
@@ -99,6 +99,8 @@ class TestContentWithTz:
         assert tasks["Montaj va cover"].assignee is None
         brief = Brief.objects.get(content_item_id=res.data["id"])
         assert brief.assignee == video and brief.status == Brief.SENT and "9:16" in brief.script
+        local = timezone.localtime(brief.deadline)
+        assert (local.date(), local.hour, local.minute) == (day - timedelta(days=1), 10, 30)
         assert "brief.sent" in kinds(video) and "task.assigned" not in kinds(video)
         assert not kinds(design)
 

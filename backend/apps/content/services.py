@@ -70,7 +70,8 @@ def create_item(*, project, by, create_tasks=True, steps=None, **fields):
             continue
         tz = (step.get("tz") or "").strip()
         if tz:
-            deadline = timezone.make_aware(datetime.combine(due, time(18, 0))) if due else None
+            at = step.get("due_time") or time(18, 0)
+            deadline = timezone.make_aware(datetime.combine(due, at)) if due else None
             brief = cm.Brief.objects.create(project=project, content_item=item, title=title, assignee=user,
                                             script=tz, deadline=deadline, created_by=by)
             briefs.send(brief, by=by)

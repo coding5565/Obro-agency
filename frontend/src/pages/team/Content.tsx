@@ -199,7 +199,7 @@ function CalendarGrid({ month, items, onAdd }: { month: string; items: ContentIt
 }
 
 interface PlanStep { position: string; label: string; assignee: number | null; assignee_name: string | null }
-interface StepForm { assignee: string; due_date: string; tz: string; open: boolean }
+interface StepForm { assignee: string; due_date: string; due_time: string; tz: string; open: boolean }
 
 // Yangi kontent: mavzu + har bosqich uchun kim qiladi, qachongacha va (xohlasa) TZ — hammasi bitta oynada.
 function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; defaultDate: string; onClose: () => void }) {
@@ -215,7 +215,7 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
   useEffect(() => {
     const next: Record<string, StepForm> = {}
     for (const step of plan.data?.[form.kind] ?? []) {
-      next[step.position] = { assignee: step.assignee ? String(step.assignee) : '', due_date: '', tz: '', open: false }
+      next[step.position] = { assignee: step.assignee ? String(step.assignee) : '', due_date: '', due_time: '18:00', tz: '', open: false }
     }
     setSteps(next)
   }, [plan.data, form.kind])
@@ -227,7 +227,7 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
       ...form, project: projectId, planned_date: form.planned_date || null,
       steps: rows.map((r) => {
         const step = steps[r.position]
-        return { position: r.position, assignee: step?.assignee ? Number(step.assignee) : null, due_date: step?.due_date || null, tz: step?.tz ?? '' }
+        return { position: r.position, assignee: step?.assignee ? Number(step.assignee) : null, due_date: step?.due_date || null, due_time: step?.due_time || null, tz: step?.tz ?? '' }
       }),
     }),
     onSuccess: () => {
@@ -274,7 +274,11 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
                     </div>
                     {step.open && (
                       <div className="mt-2 space-y-2">
-                        <Input type="date" value={step.due_date} onChange={(e) => update(r.position, { due_date: e.target.value })} aria-label={`${r.label}: muddat`} className="sm:hidden" />
+                        <div className="grid grid-cols-[1fr_120px] gap-2 sm:flex sm:items-center">
+                          <Input type="date" value={step.due_date} onChange={(e) => update(r.position, { due_date: e.target.value })} aria-label={`${r.label}: muddat`} className="sm:hidden" />
+                          <span className="hidden text-[12.5px] font-semibold text-muted sm:inline">TZ muddati: {step.due_date ? step.due_date.split('-').reverse().join('.') : 'joylash sanasi'}, soat</span>
+                          <Input type="time" value={step.due_time} onChange={(e) => update(r.position, { due_time: e.target.value })} aria-label={`${r.label}: TZ soati`} className="sm:!w-[120px]" />
+                        </div>
                         <Textarea rows={3} value={step.tz} onChange={(e) => update(r.position, { tz: e.target.value })} autoFocus
                           placeholder="TZ: nima qilish kerak, kadrlar, format (9:16, 30 soniya), namunalar…" aria-label={`${r.label}: TZ`} />
                       </div>

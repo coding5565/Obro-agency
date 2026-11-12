@@ -52,6 +52,7 @@ class ContentStepSerializer(serializers.Serializer):
     position = serializers.CharField(max_length=40)
     assignee = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(is_active=True), allow_null=True)
     due_date = serializers.DateField(required=False, allow_null=True)
+    due_time = serializers.TimeField(required=False, allow_null=True)
     tz = serializers.CharField(required=False, allow_blank=True, max_length=5000)
 
 
