@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -24,7 +25,7 @@ class ContentItemViewSet(viewsets.ModelViewSet):
     permission_classes = [ObroPermission]
     required_perms = {
         "read": access.CONTENT_VIEW, "write": access.CONTENT_MANAGE,
-        "versions": access.CONTENT_UPLOAD, "comments": access.CONTENT_VIEW,
+        "versions": access.CONTENT_UPLOAD, "comments": access.CONTENT_VIEW, "plan": access.CONTENT_MANAGE,
     }
     filterset_fields = ["project", "project__client", "status", "kind"]
     search_fields = ["title"]
@@ -48,6 +49,12 @@ class ContentItemViewSet(viewsets.ModelViewSet):
         project = data.pop("project")
         item = services.create_item(project=project, by=self.request.user, **data)
         serializer.instance = item
+
+    @action(detail=False, methods=["get"])
+    def plan(self, request):
+        """Forma uchun: har kontent turi bo'yicha bosqichlar va odatiy ijrochilar."""
+        project = get_object_or_404(visible_projects(request.user), pk=request.query_params.get("project"))
+        return Response(services.plan_steps(project))
 
     @action(detail=True, methods=["post"], url_path="set-status")
     def set_status(self, request, pk=None):

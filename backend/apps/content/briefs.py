@@ -95,7 +95,7 @@ def approve(brief, *, by):
     tasks = []
     if brief.content_item_id:
         tasks = list(tm.Task.objects.filter(content_item=brief.content_item, assignee=brief.assignee,
-                                            status__in=[tm.TODO, tm.IN_PROGRESS]))
+                                            status__in=[tm.TODO, tm.IN_PROGRESS, tm.REVIEW]))
     for task in tasks:
         set_task_status(task, tm.DONE, by=brief.assignee)
     if not tasks:

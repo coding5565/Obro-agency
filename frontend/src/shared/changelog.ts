@@ -8,6 +8,15 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.12',
+    date: '2026-11-12',
+    title: 'Kontent rejasida TZ, hisob va ranglar',
+    changes: [
+      { area: 'Yangi kontent', items: ['Har bosqichga (ssenariy, suratga olish, montaj) kim qilishini va muddatini shu oynaning o‘zida tanlash', '«+ TZ» tugmasi: TZ shu yerda yoziladi va ijrochiga darhol yuboriladi'] },
+      { area: 'Kontent reja', items: ['Shu oy nechta Reels, Post (karusel), Stories va jami qo‘yilgani, tarif bo‘yicha yana nechta kerakligi', 'Ranglar: yashil — tayyor/joylandi, sariq — jarayonda, qizil — boshlanmagan, to‘q qizil — muddati o‘tgan', 'Ishchi vazifani boshlasa, kontent o‘zi «jarayonda»ga o‘tadi'] },
+    ],
+  },
+  {
     version: '1.11',
     date: '2026-11-10',
     title: 'Vazifalar doskasi (Trello uslubida)',

@@ -1,4 +1,6 @@
 """Kontent oqimi: reja → … → ichki tekshiruv → mijoz tasdig'i → joylandi."""
+from datetime import datetime, time
+
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -28,16 +30,52 @@ def _assignee_for(project, position_code):
     return None, Position.objects.filter(code=position_code).first()
 
 
+def plan_steps(project):
+    """Kontent turi bo'yicha bosqichlar va loyihadagi odatiy ijrochi (formada oldindan tanlanadi)."""
+    result = {}
+    for kind, steps in DEFAULT_TASKS.items():
+        rows = []
+        for position_code, label in steps:
+            user, _position = _assignee_for(project, position_code)
+            rows.append({"position": position_code, "label": label, "assignee": user.pk if user else None,
+                         "assignee_name": user.full_name if user else None})
+        result[kind] = rows
+    return result
+
+
 @transaction.atomic
-def create_item(*, project, by, create_tasks=True, **fields):
+def create_item(*, project, by, create_tasks=True, steps=None, **fields):
+    """Kontent qo'shadi va bosqichlar bo'yicha vazifalar yaratadi.
+
+    steps berilsa (formadan): har bosqichga tanlangan ijrochi, muddat va ixtiyoriy TZ matni.
+    TZ yozilgan bosqichga TZ yaratilib ijrochiga yuboriladi, qolganlariga «yangi vazifa» xabari boradi.
+    """
+    from apps.content import briefs
+    from apps.tasks.services import announce_assigned
+
     item = cm.ContentItem.objects.create(project=project, created_by=by, **fields)
-    if create_tasks:
-        for position_code, label in DEFAULT_TASKS.get(item.kind, []):
-            user, position = _assignee_for(project, position_code)
-            Task.objects.create(
-                project=project, content_item=item, title=f"{label}: {item.title}"[:200],
-                assignee=user, position=position, due_date=item.planned_date, created_by=by,
-            )
+    if not create_tasks:
+        return item
+    chosen = {step["position"]: step for step in steps or []}
+    for position_code, label in DEFAULT_TASKS.get(item.kind, []):
+        user, position = _assignee_for(project, position_code)
+        step = chosen.get(position_code)
+        if step is not None:
+            user = step.get("assignee")
+        due = (step or {}).get("due_date") or item.planned_date
+        title = f"{label}: {item.title}"[:200]
+        task = Task.objects.create(project=project, content_item=item, title=title, assignee=user,
+                                   position=position, due_date=due, created_by=by)
+        if step is None or user is None:
+            continue
+        tz = (step.get("tz") or "").strip()
+        if tz:
+            deadline = timezone.make_aware(datetime.combine(due, time(18, 0))) if due else None
+            brief = cm.Brief.objects.create(project=project, content_item=item, title=title, assignee=user,
+                                            script=tz, deadline=deadline, created_by=by)
+            briefs.send(brief, by=by)
+        else:
+            announce_assigned(task, by)
     return item
 
 

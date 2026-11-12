@@ -40,8 +40,21 @@ def set_task_status(task, new_status, *, by):
         task.completed_at = None
     task.status = new_status
     task.save(update_fields=["status", "completed_at", "assignee"])
+    _start_content(task)
     _announce(task, old, by)
     return task
+
+
+# Ishchi vazifani boshlasa, «Reja»dagi kontent o'zi jarayonga o'tadi (kalendarda sariq bo'ladi).
+CONTENT_STAGE = {"smm_target": "script", "video_mobilo": "shooting", "design_montage": "editing"}
+
+
+def _start_content(task):
+    item = task.content_item
+    if item is None or item.status != "idea" or task.status not in (tm.IN_PROGRESS, tm.REVIEW, tm.DONE):
+        return
+    item.status = CONTENT_STAGE.get(task.position.code if task.position else "", "script")
+    item.save(update_fields=["status", "updated_at"])
 
 
 def _announce(task, old, by):

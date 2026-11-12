@@ -1,6 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.accounts.models import User
 from apps.clients.selectors import visible_projects
 from apps.content.briefs import clean_shot_list
 from apps.content.models import Approval, Brief, Comment, ContentItem, ContentVersion, ShootDay
@@ -45,6 +46,15 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ["id", "body", "is_internal", "author_name", "created_at"]
 
 
+class ContentStepSerializer(serializers.Serializer):
+    """«Yangi kontent» formasidagi bir bosqich: kim qiladi, qachongacha, TZ (ixtiyoriy)."""
+
+    position = serializers.CharField(max_length=40)
+    assignee = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(is_active=True), allow_null=True)
+    due_date = serializers.DateField(required=False, allow_null=True)
+    tz = serializers.CharField(required=False, allow_blank=True, max_length=5000)
+
+
 class ContentItemSerializer(serializers.ModelSerializer):
     project_title = serializers.CharField(source="project.__str__", read_only=True)
     client_name = serializers.CharField(source="project.client.name", read_only=True)
@@ -52,13 +62,14 @@ class ContentItemSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     latest_version = VersionSerializer(read_only=True)
     revisions_left = serializers.SerializerMethodField()
+    steps = ContentStepSerializer(many=True, write_only=True, required=False)
 
     class Meta:
         model = ContentItem
         fields = ["id", "project", "project_title", "client_name", "kind", "kind_label", "title", "caption",
                   "internal_notes", "planned_date", "status", "status_label", "platform", "published_at",
                   "published_url", "counts_toward_limit", "revisions_used", "revisions_left", "latest_version",
-                  "created_at", "updated_at"]
+                  "created_at", "updated_at", "steps"]
         read_only_fields = ["status", "published_at", "published_url", "revisions_used"]
 
     def get_revisions_left(self, item):
@@ -69,6 +80,22 @@ class ContentItemSerializer(serializers.ModelSerializer):
         if not visible_projects(request.user).filter(pk=project.pk).exists():
             raise serializers.ValidationError("Bu loyiha sizga biriktirilmagan")
         return project
+
+    def validate(self, attrs):
+        steps = attrs.get("steps")
+        if steps is None:
+            return attrs
+        if self.instance is not None:
+            raise serializers.ValidationError({"steps": "Bosqichlar faqat kontent qo‘shilganda beriladi"})
+        project = attrs["project"]
+        team = set(project.assignments.filter(ended_at__isnull=True).values_list("user_id", flat=True))
+        for step in steps:
+            if step["assignee"] is not None and step["assignee"].pk not in team:
+                raise serializers.ValidationError(
+                    {"steps": f"{step['assignee'].full_name} shu mijozga biriktirilmagan"})
+            if (step.get("tz") or "").strip() and step["assignee"] is None:
+                raise serializers.ValidationError({"steps": "TZ yozilgan bosqichga ijrochi tanlang"})
+        return attrs
 
 
 class ContentItemDetailSerializer(ContentItemSerializer):
