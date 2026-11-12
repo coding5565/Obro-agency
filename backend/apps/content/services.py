@@ -149,15 +149,28 @@ def client_decide(item, *, by, approve: bool, comment="", timecode=""):
 
 
 @transaction.atomic
-def publish(item, *, by, url=""):
-    # Stories mijoz tasdig'isiz ham joylanadi, qolgan turlar faqat tasdiqdan keyin.
+def publish(item, *, by, url="", skip_approval=False, published_on=None):
+    """Kontentni «joylandi» qiladi.
+
+    Odatda faqat mijoz tasdig'idan keyin (stories — tasdiqsiz ham). skip_approval=True — panelga keyin
+    kiritilgan, aslida allaqachon joylangan kontent: menejer sanasi bilan belgilaydi.
+    Shu kontentning ochiq vazifalari jimgina yopiladi (ish allaqachon qilingan).
+    """
+    if item.status in (cm.PUBLISHED, cm.CANCELLED):
+        raise ValidationError({"status": "Bu kontent allaqachon joylangan yoki bekor qilingan"})
     can_skip_client = item.kind == "stories" and item.status in (cm.IDEA, cm.EDITING, cm.INTERNAL_REVIEW)
-    if item.status != cm.APPROVED and not can_skip_client:
+    if item.status != cm.APPROVED and not can_skip_client and not skip_approval:
         raise ValidationError({"status": "Avval mijoz tasdiqlashi kerak"})
+    now = timezone.now()
+    if published_on and published_on > timezone.localdate():
+        raise ValidationError({"published_on": "Kelajakdagi sana bo‘lmaydi"})
     item.status = cm.PUBLISHED
-    item.published_at = timezone.now()
+    item.published_at = (timezone.make_aware(datetime.combine(published_on, time(12, 0)))
+                         if published_on and published_on != timezone.localdate() else now)
     item.published_url = url
     item.save(update_fields=["status", "published_at", "published_url", "updated_at"])
+    Task.objects.filter(content_item=item, status__in=["todo", "in_progress", "review"]).update(
+        status="done", completed_at=now)
     auto_entry(user=by, project=item.project, kind="publishing",
                title=f"{item.get_kind_display()} «{item.title}»", content_item=item)
     return item

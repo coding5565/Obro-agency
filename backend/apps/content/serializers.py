@@ -71,7 +71,7 @@ class ContentItemSerializer(serializers.ModelSerializer):
                   "internal_notes", "planned_date", "status", "status_label", "platform", "published_at",
                   "published_url", "counts_toward_limit", "revisions_used", "revisions_left", "latest_version",
                   "created_at", "updated_at", "steps"]
-        read_only_fields = ["status", "published_at", "published_url", "revisions_used"]
+        read_only_fields = ["status", "published_at", "revisions_used"]
 
     def get_revisions_left(self, item):
         return revisions_left(item)

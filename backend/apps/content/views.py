@@ -79,7 +79,10 @@ class ContentItemViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def publish(self, request, pk=None):
         url = serializers.URLField(required=False, allow_blank=True).run_validation(request.data.get("url", ""))
-        item = services.publish(self.get_object(), by=request.user, url=url)
+        published_on = serializers.DateField(required=False, allow_null=True).run_validation(
+            request.data.get("published_on") or None)
+        item = services.publish(self.get_object(), by=request.user, url=url,
+                                skip_approval=bool(request.data.get("skip_approval")), published_on=published_on)
         return Response(ContentItemSerializer(item, context={"request": request}).data)
 
     @action(detail=True, methods=["get", "post"])

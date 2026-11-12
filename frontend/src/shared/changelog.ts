@@ -8,6 +8,14 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.13',
+    date: '2026-11-12',
+    title: 'Kontentni tahrirlash',
+    changes: [
+      { area: 'Kontent', items: ['«Tahrirlash» tugmasi: turi, sanasi, mavzu, matn, ichki izoh va post havolasini o‘zgartirish (joylanganlarini ham)', '«Joylandi deb belgilash» endi har qanday holatda: oldin qilib bo‘lingan kontentni joylangan sanasi bilan belgilash, ochiq vazifalari o‘zi yopiladi'] },
+    ],
+  },
+  {
     version: '1.12',
     date: '2026-11-12',
     title: 'Kontent rejasida TZ, hisob va ranglar',

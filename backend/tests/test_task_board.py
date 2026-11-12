@@ -120,3 +120,30 @@ class TestContentWithTz:
         api_for(team["video"]).post(f"/api/v1/tasks/{task.pk}/set-status/", {"status": "in_progress"})
         item.refresh_from_db()
         assert item.status == "shooting"
+
+
+class TestEditOldContent:
+    def test_manager_edits_and_marks_old_content_published_with_date(self, project, team):
+        from apps.content import services as content_services
+
+        smm, video = team["smm"], team["video"]
+        day = timezone.localdate() - timedelta(days=5)
+        item = content_services.create_item(project=project, by=smm, kind="post", title="Eski post", planned_date=day)
+        res = api_for(smm).patch(f"/api/v1/content/items/{item.pk}/", {"title": "Eski post (tuzatildi)",
+                                                                       "caption": "Matn"}, format="json")
+        assert res.status_code == 200 and res.data["title"] == "Eski post (tuzatildi)"
+        # Mijoz tasdig'isiz faqat aniq «allaqachon joylangan» belgisi bilan.
+        url = f"/api/v1/content/items/{item.pk}/publish/"
+        assert api_for(smm).post(url, {}, format="json").status_code == 400
+        assert api_for(video).post(url, {"skip_approval": True}, format="json").status_code == 403
+        res = api_for(smm).post(url, {"skip_approval": True, "published_on": str(day)}, format="json")
+        assert res.status_code == 200 and res.data["status"] == "published"
+        item.refresh_from_db()
+        assert timezone.localtime(item.published_at).date() == day
+        assert not item.tasks.exclude(status=tm.DONE).exists()
+        assert api_for(smm).post(url, {"skip_approval": True}, format="json").status_code == 400
+        future = str(timezone.localdate() + timedelta(days=2))
+        other = content_services.create_item(project=project, by=smm, kind="post", title="Yangi", planned_date=day)
+        bad = api_for(smm).post(f"/api/v1/content/items/{other.pk}/publish/",
+                                {"skip_approval": True, "published_on": future}, format="json")
+        assert bad.status_code == 400

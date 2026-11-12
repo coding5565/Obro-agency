@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ExternalLink, Send, Upload } from 'lucide-react'
+import { CheckCircle2, ExternalLink, Pencil, Send, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { get, post, upload } from '../../shared/api/client'
+import { get, patch, post, upload } from '../../shared/api/client'
 import type { ContentItem, Page, Task, Version } from '../../shared/api/types'
 import { useAuth } from '../../shared/auth/AuthProvider'
-import { date, dateTime } from '../../shared/lib/format'
+import { date, dateTime, today } from '../../shared/lib/format'
 import { Badge, Button, Card, ErrorBox, Field, Input, Kicker, Modal, PageHeader, Select, Spinner, StatusBadge, Textarea } from '../../shared/ui'
 
 const MANUAL_STATUS: Record<string, [string, string][]> = {
@@ -26,6 +26,7 @@ export function ContentDetailPage() {
   const briefs = useQuery({ queryKey: ['briefs', { content: id }], queryFn: () => get<Page<{ id: number; title: string; assignee_name: string; status: string; status_label: string }>>('/content/briefs/', { content_item: id }) })
   const [uploading, setUploading] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [comment, setComment] = useState('')
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['content-item', id] })
@@ -49,13 +50,14 @@ export function ContentDetailPage() {
         subtitle={<span className="flex flex-wrap items-center gap-2">{it.client_name} · {it.kind_label} · {date(it.planned_date)} <StatusBadge status={it.status} label={it.status_label} /></span>}
         actions={
           <>
+            {manage && <Button variant="ghost" onClick={() => setEditing(true)}><Pencil size={15} />Tahrirlash</Button>}
             {can('content.manage') && <Link to={`/app/briefs?new=1&project=${it.project}&item=${it.id}&title=${encodeURIComponent(it.title)}`}><Button variant="ghost">TZ yozish</Button></Link>}
             {can('content.upload') && !['published', 'cancelled'].includes(it.status) && <Button variant="ghost" onClick={() => setUploading(true)}><Upload size={15} />Versiya yuklash</Button>}
             {manage && ['internal_review', 'changes'].includes(it.status) && it.latest_version && (
               <Button onClick={() => action.mutate('send-to-client')}><Send size={15} />Mijozga yuborish</Button>
             )}
-            {manage && (it.status === 'approved' || (it.kind === 'stories' && ['idea', 'editing', 'internal_review'].includes(it.status))) && (
-              <Button variant="dark" onClick={() => setPublishing(true)}>Joylandi deb belgilash</Button>
+            {manage && !['published', 'cancelled'].includes(it.status) && (
+              <Button variant="dark" onClick={() => setPublishing(true)}><CheckCircle2 size={15} />Joylandi deb belgilash</Button>
             )}
           </>
         }
@@ -133,7 +135,8 @@ export function ContentDetailPage() {
         </div>
       </div>
       {uploading && <UploadVersion itemId={it.id} onClose={() => setUploading(false)} onDone={refresh} />}
-      {publishing && <PublishModal itemId={it.id} onClose={() => setPublishing(false)} onDone={refresh} />}
+      {publishing && <PublishModal item={it} onClose={() => setPublishing(false)} onDone={refresh} />}
+      {editing && <EditItem item={it} onClose={() => setEditing(false)} onDone={refresh} />}
     </>
   )
 }
@@ -186,15 +189,59 @@ function UploadVersion({ itemId, onClose, onDone }: { itemId: number; onClose: (
   )
 }
 
-function PublishModal({ itemId, onClose, onDone }: { itemId: number; onClose: () => void; onDone: () => void }) {
+function PublishModal({ item, onClose, onDone }: { item: ContentItem; onClose: () => void; onDone: () => void }) {
+  const normal = item.status === 'approved' || (item.kind === 'stories' && ['idea', 'editing', 'internal_review'].includes(item.status))
   const [url, setUrl] = useState('')
-  const send = useMutation({ mutationFn: () => post(`/content/items/${itemId}/publish/`, { url }), onSuccess: () => { onDone(); onClose() } })
+  const [day, setDay] = useState(item.planned_date && item.planned_date < today() ? item.planned_date : today())
+  const send = useMutation({
+    mutationFn: () => post(`/content/items/${item.id}/publish/`, { url, published_on: day, skip_approval: !normal }),
+    onSuccess: () => { onDone(); onClose() },
+  })
   return (
-    <Modal title="Joylandi" onClose={onClose}>
+    <Modal title="Joylandi deb belgilash" onClose={onClose}>
       <form onSubmit={(e) => { e.preventDefault(); send.mutate() }} className="space-y-3">
-        <Field label="Post havolasi" hint="Mijoz kalendarida shu havola ko‘rinadi"><Input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://instagram.com/p/…" /></Field>
+        {!normal && (
+          <div className="rounded-xl bg-warn-soft p-3 text-[13px] text-warn">
+            Bu kontent mijoz tasdig‘idan o‘tmagan. Allaqachon joylangan (qilib bo‘lingan) bo‘lsa, belgilang: ochiq vazifalari ham yopiladi.
+          </div>
+        )}
+        <Field label="Qachon joylandi"><Input type="date" value={day} max={today()} onChange={(e) => setDay(e.target.value)} required /></Field>
+        <Field label="Post havolasi (ixtiyoriy)" hint="Mijoz kalendarida shu havola ko‘rinadi"><Input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://instagram.com/p/…" /></Field>
         <ErrorBox error={send.error} />
-        <Button type="submit" className="w-full">Tasdiqlash</Button>
+        <Button type="submit" className="w-full" disabled={send.isPending}>Joylandi</Button>
+      </form>
+    </Modal>
+  )
+}
+
+function EditItem({ item, onClose, onDone }: { item: ContentItem; onClose: () => void; onDone: () => void }) {
+  const [form, setForm] = useState({
+    kind: item.kind, title: item.title, planned_date: item.planned_date ?? '', caption: item.caption,
+    internal_notes: item.internal_notes, published_url: item.published_url ?? '',
+  })
+  const save = useMutation({
+    mutationFn: () => patch(`/content/items/${item.id}/`, { ...form, planned_date: form.planned_date || null }),
+    onSuccess: () => { onDone(); onClose() },
+  })
+  return (
+    <Modal title="Kontentni tahrirlash" onClose={onClose}>
+      <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Turi">
+            <Select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
+              <option value="reels">Reels</option><option value="post">Post</option><option value="stories">Stories</option><option value="video">Video</option>
+            </Select>
+          </Field>
+          <Field label="Joylash sanasi"><Input type="date" value={form.planned_date} onChange={(e) => setForm({ ...form, planned_date: e.target.value })} /></Field>
+        </div>
+        <Field label="Mavzu"><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></Field>
+        <Field label="Matn / g‘oya"><Textarea rows={4} value={form.caption} onChange={(e) => setForm({ ...form, caption: e.target.value })} /></Field>
+        <Field label="Ichki izoh (mijozga ko‘rinmaydi)"><Textarea rows={2} value={form.internal_notes} onChange={(e) => setForm({ ...form, internal_notes: e.target.value })} /></Field>
+        {item.status === 'published' && (
+          <Field label="Post havolasi"><Input type="url" value={form.published_url} onChange={(e) => setForm({ ...form, published_url: e.target.value })} placeholder="https://instagram.com/p/…" /></Field>
+        )}
+        <ErrorBox error={save.error} />
+        <Button type="submit" className="w-full" disabled={save.isPending}>Saqlash</Button>
       </form>
     </Modal>
   )
