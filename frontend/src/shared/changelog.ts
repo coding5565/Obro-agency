@@ -8,6 +8,15 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.14',
+    date: '2026-11-12',
+    title: 'Tayyor fayllar va tez video',
+    changes: [
+      { area: 'Fayllar', items: ['Kontent joylangach faqat oxirgi tayyor fayl saqlanadi, oraliq versiyalar fayli o‘chadi (disk tejaladi)', 'Video va dizaynlar tezroq ochiladi, videoni oldinga-orqaga surish mumkin; panel sekinlashmaydi'] },
+      { area: 'Kontent', items: ['Post (karusel) uchun TZ shart emas: faqat kim qilishi tanlanadi'] },
+    ],
+  },
+  {
     version: '1.13',
     date: '2026-11-12',
     title: 'Kontentni tahrirlash',

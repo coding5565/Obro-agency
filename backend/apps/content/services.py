@@ -69,7 +69,7 @@ def create_item(*, project, by, create_tasks=True, steps=None, **fields):
                                    position=position, due_date=due, created_by=by)
         if step is None or user is None:
             continue
-        tz = (step.get("tz") or "").strip()
+        tz = "" if item.kind == "post" else (step.get("tz") or "").strip()
         if tz:
             at = step.get("due_time") or time(18, 0)
             deadline = timezone.make_aware(datetime.combine(due, at)) if due else None
@@ -172,9 +172,28 @@ def publish(item, *, by, url="", skip_approval=False, published_on=None):
     item.save(update_fields=["status", "published_at", "published_url", "updated_at"])
     Task.objects.filter(content_item=item, status__in=["todo", "in_progress", "review"]).update(
         status="done", completed_at=now)
+    drop_draft_files(item)
     auto_entry(user=by, project=item.project, kind="publishing",
                title=f"{item.get_kind_display()} «{item.title}»", content_item=item)
     return item
+
+
+def drop_draft_files(item):
+    """Joylangan kontentdan faqat oxirgi (tayyor) versiya fayli qoladi: diskni tejaydi.
+
+    Versiya yozuvlari (raqam, izoh, kim yuklagan) tarix uchun qoladi, faqat oraliq fayllar o'chadi.
+    """
+    latest = item.versions.order_by("-number").first()
+    freed = 0
+    for version in item.versions.exclude(pk=getattr(latest, "pk", None)).exclude(file=""):
+        try:
+            freed += version.file.size
+        except OSError:
+            pass
+        version.file.delete(save=False)
+        version.file = ""
+        version.save(update_fields=["file"])
+    return freed
 
 
 def revisions_left(item):

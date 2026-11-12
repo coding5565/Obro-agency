@@ -228,6 +228,8 @@ APP_LOCATIONS="
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
     location /static/ { alias $ROOT/static/; expires 7d; }
+    # Yopiq fayllar: faqat panel ruxsat bergandan keyin (X-Accel-Redirect), to'g'ridan-to'g'ri ochilmaydi.
+    location /protected-media/ { internal; alias $ROOT/media/; }
     location /assets/ { expires 30d; add_header Cache-Control \"public, immutable\"; try_files \$uri =404; }
     # Telefon ilovasi: manifest o'z turi bilan, service worker esa keshsiz (yangilanish darhol yetib borsin).
     location = /manifest.webmanifest { types { } default_type application/manifest+json; add_header Cache-Control \"no-cache\"; }

@@ -255,7 +255,7 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
           <p className="rounded-2xl bg-ivory/60 p-3 text-[12.5px] text-muted">Stories uchun TZ va vazifa shart emas: joylagach, kontentni ochib «Joylandi» deb belgilang.</p>
         ) : (
         <div className="rounded-2xl border border-line-soft bg-ivory/60 p-3">
-          <div className="mb-2 text-[13px] font-bold">Kim qiladi va TZ</div>
+          <div className="mb-2 text-[13px] font-bold">{form.kind === 'post' ? 'Kim qiladi' : 'Kim qiladi va TZ'}</div>
           {plan.isLoading ? <Spinner /> : rows.length === 0 ? <div className="text-[13px] text-muted">Bu turga bosqich yo‘q</div> : (
             <div className="space-y-2.5">
               {rows.map((r) => {
@@ -273,13 +273,13 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
                         aria-label={`${r.label}: muddat`} title="Muddat (bo‘sh bo‘lsa — joylash sanasi)" className="hidden sm:block" />
                       <TimeSelect value={step.due_time} onChange={(due_time) => update(r.position, { due_time })}
                         aria-label={`${r.label}: soat`} title="Soat" className="hidden sm:block" />
-                      <button type="button" onClick={() => update(r.position, { open: !step.open })}
+                      {form.kind !== 'post' && <button type="button" onClick={() => update(r.position, { open: !step.open })}
                         className={clsx('h-11 rounded-xl border px-3 text-[12.5px] font-bold whitespace-nowrap',
                           step.tz.trim() ? 'border-gold bg-gold-soft text-gold-ink' : 'border-line bg-white text-text-2 hover:border-ink')}>
                         {step.tz.trim() ? 'TZ ✓' : '+ TZ'}
-                      </button>
+                      </button>}
                     </div>
-                    {step.open && (
+                    {step.open && form.kind !== 'post' && (
                       <div className="mt-2 space-y-2">
                         <div className="grid grid-cols-[1fr_104px] gap-2 sm:hidden">
                           <Input type="date" value={step.due_date} onChange={(e) => update(r.position, { due_date: e.target.value })} aria-label={`${r.label}: muddat`} />

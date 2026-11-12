@@ -130,6 +130,8 @@ STATIC_URL = "static/"
 STATIC_ROOT = Path(env("STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(env("MEDIA_ROOT", str(BASE_DIR / "media")))
+# Serverda nginx yopiq fayllarni o'zi uzatadi (X-Accel-Redirect). Lokalda bo'sh: Django o'zi beradi.
+MEDIA_X_ACCEL_PREFIX = env("MEDIA_X_ACCEL_PREFIX", "")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

@@ -1,4 +1,8 @@
-from django.http import FileResponse, Http404
+import mimetypes
+from urllib.parse import quote
+
+from django.conf import settings
+from django.http import FileResponse, Http404, HttpResponse
 from django.views import View
 
 from apps.accounts.models import User
@@ -25,6 +29,12 @@ class VersionFileView(View):
             allowed = visible_projects(user).filter(pk=version.item.project_id).exists()
         if not allowed:
             raise Http404()
-        response = FileResponse(version.file.open("rb"))
+        if settings.MEDIA_X_ACCEL_PREFIX:
+            # Ruxsat shu yerda tekshirildi, faylni nginx uzatadi (katta video ham panelni band qilmaydi).
+            response = HttpResponse()
+            response["X-Accel-Redirect"] = settings.MEDIA_X_ACCEL_PREFIX + quote(version.file.name)
+            response["Content-Type"] = mimetypes.guess_type(version.file.name)[0] or "application/octet-stream"
+        else:
+            response = FileResponse(version.file.open("rb"))
         response["Cache-Control"] = "private, max-age=600"
         return response

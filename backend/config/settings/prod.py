@@ -1,7 +1,8 @@
 from .base import *  # noqa: F401,F403
-from .base import SECRET_KEY, env_bool
+from .base import SECRET_KEY, env, env_bool
 
 DEBUG = False
+MEDIA_X_ACCEL_PREFIX = env("MEDIA_X_ACCEL_PREFIX", "/protected-media/")
 if SECRET_KEY.startswith("dev-only"):
     raise RuntimeError("DJANGO_SECRET_KEY serverda albatta berilishi kerak")
 

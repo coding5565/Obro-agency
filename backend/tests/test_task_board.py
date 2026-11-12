@@ -1,5 +1,6 @@
 """Vazifalar doskasi: SMM menejer vazifa beradi, ishchi suradi, izoh yozadi, xabarlar boradi."""
 from datetime import timedelta
+from pathlib import Path
 
 from django.utils import timezone
 
@@ -154,3 +155,55 @@ class TestEditOldContent:
         assert res.status_code == 201
         assert not tm.Task.objects.filter(content_item_id=res.data["id"]).exists()
         assert api_for(team["smm"]).get("/api/v1/content/items/plan/", {"project": project.pk}).data["stories"] == []
+
+
+class TestMediaStorage:
+    def _versions(self, project, team):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        from apps.content import services as content_services
+
+        item = content_services.create_item(project=project, by=team["smm"], kind="stories", title="Fayl",
+                                            planned_date=timezone.localdate())
+        design = api_for(team["design"])
+        for n in (1, 2):
+            upload = SimpleUploadedFile(f"v{n}.mp4", b"x" * 10, content_type="video/mp4")
+            assert design.post(f"/api/v1/content/items/{item.pk}/versions/", {"file": upload},
+                               format="multipart").status_code == 201
+        return item
+
+    def test_publish_keeps_only_final_file(self, project, team, settings, tmp_path):
+        settings.MEDIA_ROOT = tmp_path
+        item = self._versions(project, team)
+        first, last = item.versions.order_by("number")
+        old_path = first.file.path
+        res = api_for(team["smm"]).post(f"/api/v1/content/items/{item.pk}/publish/", {}, format="json")
+        assert res.status_code == 200
+        first.refresh_from_db()
+        last.refresh_from_db()
+        assert not first.file and last.file and item.versions.count() == 2
+        assert not Path(old_path).exists()
+
+    def test_file_served_by_nginx_after_permission_check(self, project, team, settings, tmp_path):
+        from common.files import signed_version_url
+
+        settings.MEDIA_ROOT = tmp_path
+        settings.MEDIA_X_ACCEL_PREFIX = "/protected-media/"
+        item = self._versions(project, team)
+        version = item.versions.order_by("-number").first()
+        request = type("R", (), {"user": team["smm"], "build_absolute_uri": lambda self, p: p})()
+        res = api_for(team["smm"]).get(signed_version_url(request, version))
+        assert res.status_code == 200
+        assert res["X-Accel-Redirect"] == "/protected-media/" + version.file.name
+        assert res["Content-Type"] == "video/mp4"
+
+    def test_post_needs_no_tz(self, project, team):
+        from apps.content.models import Brief
+
+        res = api_for(team["smm"]).post("/api/v1/content/items/", {
+            "project": project.pk, "kind": "post", "title": "Karusel",
+            "steps": [{"position": "design_montage", "assignee": team["design"].pk, "tz": "e'tiborsiz"}]},
+            format="json")
+        assert res.status_code == 201
+        assert not Brief.objects.filter(content_item_id=res.data["id"]).exists()
+        assert "task.assigned" in kinds(team["design"])
