@@ -12,7 +12,7 @@ export const RELEASES: Release[] = [
     date: '2026-11-12',
     title: 'Kontentni tahrirlash',
     changes: [
-      { area: 'Kontent', items: ['«Tahrirlash» tugmasi: turi, sanasi, mavzu, matn, ichki izoh va post havolasini o‘zgartirish (joylanganlarini ham)', '«Joylandi deb belgilash» endi har qanday holatda: oldin qilib bo‘lingan kontentni joylangan sanasi bilan belgilash, ochiq vazifalari o‘zi yopiladi'] },
+      { area: 'Kontent', items: ['«Tahrirlash» tugmasi: turi, sanasi, mavzu, matn, ichki izoh va post havolasini o‘zgartirish (joylanganlarini ham)', '«Joylandi deb belgilash» endi har qanday holatda: oldin qilib bo‘lingan kontentni joylangan sanasi bilan belgilash, ochiq vazifalari o‘zi yopiladi', 'Stories uchun TZ va vazifa shart emas', '«Jami» hisobida faqat Reels va Post (karusel); Stories alohida sanaladi'] },
     ],
   },
   {

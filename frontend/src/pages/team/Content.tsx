@@ -88,10 +88,12 @@ const KIND_LABELS: [string, string][] = [['reels', 'Reels'], ['post', 'Post (kar
 
 function KindCounts({ counts, limits }: { counts: Record<string, { planned: number; published: number }>; limits: Record<string, number> }) {
   const kinds = KIND_LABELS.filter(([kind]) => counts[kind] || limits[kind])
-  const total = Object.values(counts).reduce((sum, c) => ({ planned: sum.planned + c.planned, published: sum.published + c.published }), { planned: 0, published: 0 })
-  const totalLimit = Object.values(limits).reduce((sum, qty) => sum + qty, 0)
+  const main = (kind: string) => kind !== 'stories'
+  const total = Object.entries(counts).filter(([kind]) => main(kind))
+    .reduce((sum, [, c]) => ({ planned: sum.planned + c.planned, published: sum.published + c.published }), { planned: 0, published: 0 })
+  const totalLimit = Object.entries(limits).filter(([kind]) => main(kind)).reduce((sum, [, qty]) => sum + qty, 0)
   const tiles = [...kinds.map(([kind, label]) => ({ key: kind, label, ...(counts[kind] ?? { planned: 0, published: 0 }), limit: limits[kind] ?? 0 })),
-    { key: 'total', label: 'Jami', ...total, limit: totalLimit }]
+    { key: 'total', label: 'Jami (Reels + Post)', ...total, limit: totalLimit }]
   return (
     <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
       {tiles.map((t) => {
@@ -249,6 +251,9 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
         <Field label="Mavzu"><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required autoFocus /></Field>
         <Field label="Matn / g‘oya"><Textarea rows={2} value={form.caption} onChange={(e) => setForm({ ...form, caption: e.target.value })} /></Field>
 
+        {form.kind === 'stories' ? (
+          <p className="rounded-2xl bg-ivory/60 p-3 text-[12.5px] text-muted">Stories uchun TZ va vazifa shart emas: joylagach, kontentni ochib «Joylandi» deb belgilang.</p>
+        ) : (
         <div className="rounded-2xl border border-line-soft bg-ivory/60 p-3">
           <div className="mb-2 text-[13px] font-bold">Kim qiladi va TZ</div>
           {plan.isLoading ? <Spinner /> : rows.length === 0 ? <div className="text-[13px] text-muted">Bu turga bosqich yo‘q</div> : (
@@ -293,6 +298,7 @@ function CreateItem({ projectId, defaultDate, onClose }: { projectId: number; de
             Har bosqich vazifa bo‘lib tushadi. TZ yozilganlariga TZ yuboriladi, ijrochiga panel va Telegram’da xabar boradi.
           </p>
         </div>
+        )}
         <ErrorBox error={create.error} />
         <Button type="submit" className="w-full" disabled={create.isPending}>
           {tzCount ? `Rejaga qo‘shish va ${tzCount} ta TZ yuborish` : 'Rejaga qo‘shish'}

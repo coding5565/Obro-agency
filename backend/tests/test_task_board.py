@@ -147,3 +147,10 @@ class TestEditOldContent:
         bad = api_for(smm).post(f"/api/v1/content/items/{other.pk}/publish/",
                                 {"skip_approval": True, "published_on": future}, format="json")
         assert bad.status_code == 400
+
+    def test_stories_need_no_tz_or_tasks(self, project, team):
+        res = api_for(team["smm"]).post("/api/v1/content/items/", {
+            "project": project.pk, "kind": "stories", "title": "Bugungi stories", "steps": []}, format="json")
+        assert res.status_code == 201
+        assert not tm.Task.objects.filter(content_item_id=res.data["id"]).exists()
+        assert api_for(team["smm"]).get("/api/v1/content/items/plan/", {"project": project.pk}).data["stories"] == []

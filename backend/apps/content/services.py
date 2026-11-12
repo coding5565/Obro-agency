@@ -18,7 +18,8 @@ DEFAULT_TASKS = {
     "video": [(Position.SMM_TARGET, "Ssenariy"), (Position.VIDEO_MOBILO, "Suratga olish"),
               (Position.DESIGN_MONTAGE, "Montaj")],
     "post": [(Position.SMM_TARGET, "Matn"), (Position.DESIGN_MONTAGE, "Dizayn")],
-    "stories": [(Position.SMM_TARGET, "Stories")],
+    # Stories uchun TZ ham, vazifa ham yaratilmaydi: SMM o'zi qo'yadi va «joylandi» deb belgilaydi.
+    "stories": [],
 }
 
 
