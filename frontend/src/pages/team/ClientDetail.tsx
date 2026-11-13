@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, UserPlus } from 'lucide-react'
+import { PhoneCall, Plus, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useParams, useSearchParams } from 'react-router'
@@ -9,6 +9,7 @@ import { useAuth } from '../../shared/auth/AuthProvider'
 import { date, money, pct, today } from '../../shared/lib/format'
 import { Badge, Button, Card, ErrorBox, Field, Input, Kicker, Modal, PageHeader, Select, Spinner, StatusBadge, Tabs } from '../../shared/ui'
 import { ClientWork } from './ClientWork'
+import { SalesScriptModal } from './SalesScript'
 import { CLIENT_STATUSES } from './Clients'
 
 export function ClientDetailPage() {
@@ -19,6 +20,7 @@ export function ClientDetailPage() {
   const projects = useQuery({ queryKey: ['projects', { client: id }], queryFn: () => get<Page<Project>>('/projects/', { client: id }) })
   const [params, setParams] = useSearchParams()
   const [modal, setModal] = useState<null | 'project' | 'contact' | 'social' | 'invite' | { assign: Project }>(null)
+  const [script, setScript] = useState(false)
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['client', id] })
     queryClient.invalidateQueries({ queryKey: ['projects'] })
@@ -41,6 +43,7 @@ export function ClientDetailPage() {
         subtitle={<span className="flex items-center gap-2">{c.niche_label} · {c.city} <StatusBadge status={c.status} label={c.status_label} /></span>}
         actions={manage && (
           <>
+            {c.status === 'lead' && <Button variant="ghost" onClick={() => setScript(true)}><PhoneCall size={16} />Sotuv skripti</Button>}
             <Select value={c.status} onChange={(e) => setStatus.mutate(e.target.value)} className="w-40">
               {CLIENT_STATUSES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </Select>
@@ -109,6 +112,8 @@ export function ClientDetailPage() {
       {modal === 'social' && <SocialForm clientId={c.id} onClose={() => setModal(null)} onSaved={refresh} />}
       {modal === 'invite' && <InviteClientForm client={c} onClose={() => setModal(null)} />}
       {modal && typeof modal === 'object' && <AssignForm project={modal.assign} onClose={() => setModal(null)} onSaved={refresh} />}
+      {script && <SalesScriptModal contactName={(c.contacts.find((x) => x.is_primary) ?? c.contacts[0])?.full_name}
+        business={c.name} source={c.source} onClose={() => setScript(false)} />}
     </>
   )
 }

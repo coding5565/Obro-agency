@@ -147,7 +147,11 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
     }
   }, [onClose])
   return (
-    <div className="fixed inset-0 z-50 flex animate-fade items-start justify-center overflow-y-auto bg-ink/45 p-4 pt-[max(7vh,calc(env(safe-area-inset-top)+16px))] pb-[calc(env(safe-area-inset-bottom)+16px)] backdrop-blur-[2px]" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex animate-fade items-start justify-center overflow-y-auto bg-ink/45 p-4 pt-[max(7vh,calc(env(safe-area-inset-top)+16px))] pb-[calc(env(safe-area-inset-bottom)+16px)] backdrop-blur-[2px]"
+      onMouseDown={(e) => {
+        // Faqat orqa fon bosilsa yopiladi: aylantirish chizig'ini (scrollbar) ushlash oynani yopmasin.
+        if (e.target === e.currentTarget && e.clientX < e.currentTarget.clientWidth) onClose()
+      }}>
       <div role="dialog" aria-modal="true" aria-label={title}
         className={cn('w-full animate-enter rounded-3xl bg-white p-6 shadow-raise', wide ? 'max-w-2xl' : 'max-w-md')}
         onMouseDown={(e) => e.stopPropagation()}>

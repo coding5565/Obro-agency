@@ -8,6 +8,15 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.15',
+    date: '2026-11-13',
+    title: 'Sotuv skripti',
+    changes: [
+      { area: 'Mijozlar', items: ['«Sotuv skripti»: potensial mijoz bilan qo‘ng‘iroq, savollar, tarif taklifi, e’tirozlarga javob, yopish va qayta aloqa', 'Potensial mijoz kartasida skript uning ismi va qayerdan kelgani bilan ochiladi', 'Tariflar jadvali «Tariflar» bo‘limidan olinadi; Telegram xabarlarini bir bosishda nusxalash'] },
+      { area: 'Oynalar', items: ['Aylantirish chizig‘i bosilganda oyna yopilib qolmaydi'] },
+    ],
+  },
+  {
     version: '1.14',
     date: '2026-11-12',
     title: 'Tayyor fayllar va tez video',

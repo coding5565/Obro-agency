@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
+import { PhoneCall, Plus } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -8,6 +8,7 @@ import type { Client, Page } from '../../shared/api/types'
 import { useAuth } from '../../shared/auth/AuthProvider'
 import { money } from '../../shared/lib/format'
 import { Button, Empty, ErrorBox, Field, Input, Modal, PageHeader, Select, Spinner, StatusBadge, Table } from '../../shared/ui'
+import { SalesScriptModal } from './SalesScript'
 
 export const NICHES: [string, string][] = [['clinic', 'Klinika'], ['education', 'O‘quv markazi'], ['restaurant', 'Restoran / kafe'],
   ['retail', 'Savdo'], ['beauty', 'Go‘zallik'], ['other', 'Boshqa']]
@@ -17,6 +18,7 @@ export function ClientsPage() {
   const { can } = useAuth()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
+  const [script, setScript] = useState(false)
   const [creating, setCreating] = useState(false)
   const list = useQuery({
     queryKey: ['clients', search, status],
@@ -25,7 +27,12 @@ export function ClientsPage() {
   return (
     <>
       <PageHeader title="Mijozlar" subtitle={list.data ? `${list.data.count} ta` : undefined}
-        actions={can('clients.manage') && <Button onClick={() => setCreating(true)}><Plus size={16} />Yangi mijoz</Button>} />
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setScript(true)}><PhoneCall size={16} />Sotuv skripti</Button>
+            {can('clients.manage') && <Button onClick={() => setCreating(true)}><Plus size={16} />Yangi mijoz</Button>}
+          </>
+        } />
       <div className="mb-3 flex flex-wrap gap-2">
         <Input placeholder="Qidirish…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
         <Select value={status} onChange={(e) => setStatus(e.target.value)} className="max-w-[180px]">
@@ -47,6 +54,7 @@ export function ClientsPage() {
         </Table>
       )}
       {creating && <ClientForm onClose={() => setCreating(false)} />}
+      {script && <SalesScriptModal onClose={() => setScript(false)} />}
     </>
   )
 }
