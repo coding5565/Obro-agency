@@ -83,6 +83,9 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         version = attrs.get("tariff_version")
+        changed = version and (self.instance is None or version.pk != self.instance.tariff_version_id)
+        if changed and not version.tariff.is_active:
+            raise serializers.ValidationError({"tariff_version": "Bu tarif endi taklif qilinmaydi"})
         if version and self.instance is None:
             # Narx va valyuta tarif versiyasidan qotiriladi (qo'lda berilmagan bo'lsa).
             attrs.setdefault("price", version.price)

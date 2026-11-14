@@ -12,7 +12,8 @@ export const RELEASES: Release[] = [
     date: '2026-11-14',
     title: 'Sayt telefonda sodda',
     changes: [
-      { area: 'obroagency.uz', items: ['Telefonda oddiy pastga suriladigan sahifa: slayd effekti olib tashlandi, «Pastga suring» belgisi', '5 ta tarif kartochkasi birdaniga ko‘rinadi, har birida «Tanlash» tugmasi Telegram’ga yozadi', 'Birinchi ekranda asosiy narsa: nima qilamiz, narx qanchadan, qanday bog‘lanish'] },
+      { area: 'obroagency.uz', items: ['Telefonda oddiy pastga suriladigan sahifa: slayd effekti olib tashlandi, «Pastga suring» belgisi', 'Tarif kartochkalari birdaniga ko‘rinadi, har birida «Tanlash» tugmasi Telegram’ga yozadi', 'Birinchi ekranda asosiy narsa: nima qilamiz, narx qanchadan, qanday bog‘lanish'] },
+      { area: 'Tariflar', items: ['Mini ($300) tarifi endi taklif qilinmaydi: saytda, botda va skriptda yo‘q, yangi loyihaga tanlab bo‘lmaydi', '«Tariflar» sahifasida u «Sotilmaydi» belgisi bilan oxirida turadi (tarix uchun)'] },
     ],
   },
   {

@@ -40,6 +40,9 @@ POSITIONS = [
 # 2026-11-01 dan 5 ta tarif, CRM kabinet hamma tariflarda.
 OFFER_2026_11 = date(2026, 11, 1)
 PREMIUM_FEATURES = FULL_FEATURES + ["weekly_review"]
+# Endi taklif qilinmaydigan tariflar: bazada qoladi (tarix uchun), lekin saytda, botda va skriptda ko'rinmaydi.
+RETIRED_TARIFFS = {"mini"}
+
 TARIFFS = [
     ("mini", "Mini", "Ilk qadam: kichik bizneslar va yakka tadbirkorlar uchun", [
         (OFFER_2026_11, Decimal("300"), {"post": 4, "stories": 8, "reels": 8}, FULL_FEATURES),
@@ -102,7 +105,8 @@ class Command(BaseCommand):
     def _tariffs(self):
         for sort, (code, name, description, versions) in enumerate(TARIFFS, start=1):
             tariff, _ = Tariff.objects.update_or_create(
-                code=code, defaults={"name": name, "description": description, "sort": sort})
+                code=code, defaults={"name": name, "description": description, "sort": sort,
+                                     "is_active": code not in RETIRED_TARIFFS})
             for valid_from, price, limits, features in versions:
                 version, created = TariffVersion.objects.get_or_create(
                     tariff=tariff, valid_from=valid_from,

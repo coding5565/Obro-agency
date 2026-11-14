@@ -271,7 +271,19 @@ class TestBotGuests:
 
     def test_tariffs_text(self, db):
         text = bot().get("/api/v1/bot/tariffs/", {"chat_id": 0}).data["text"]
-        assert "Mini" in text and "Premium" in text and "CRM" in text
+        assert "Lite" in text and "Premium" in text and "CRM" in text
+        # Mini endi taklif qilinmaydi: bazada qoladi, lekin botda ko'rinmaydi.
+        assert "Mini" not in text and "300" not in text
+
+    def test_retired_tariff_stays_inactive_after_reseed(self, db):
+        from django.core.management import call_command
+
+        from apps.catalog.models import Tariff
+
+        Tariff.objects.filter(code="mini").update(is_active=True)
+        call_command("seed_obro", verbosity=0)
+        assert not Tariff.objects.get(code="mini").is_active
+        assert Tariff.objects.filter(is_active=True).count() == 4
 
     def test_request_creates_lead_client_once_a_day(self, rahbar):
         from apps.clients.models import Client
@@ -290,3 +302,18 @@ class TestBotGuests:
         assert APIClient().get("/api/v1/bot/tariffs/", {"chat_id": 0}).status_code == 403
         anonymous = APIClient().post("/api/v1/bot/link-phone/", {"chat_id": 1, "phone": "1"}, format="json")
         assert anonymous.status_code == 403
+
+
+def test_new_project_cannot_use_retired_tariff(rahbar):
+    from apps.catalog.models import Tariff
+    from apps.clients.models import Client
+    from tests.conftest import api_for
+
+    client = Client.objects.create(name="Yangi", status="lead")
+    mini = Tariff.objects.get(code="mini").versions.order_by("-valid_from").first()
+    lite = Tariff.objects.get(code="lite").versions.order_by("-valid_from").first()
+    body = {"client": client.pk, "start_date": "2026-12-01"}
+    bad = api_for(rahbar).post("/api/v1/projects/", {**body, "tariff_version": mini.pk}, format="json")
+    assert bad.status_code == 400 and "tariff_version" in bad.data
+    ok = api_for(rahbar).post("/api/v1/projects/", {**body, "tariff_version": lite.pk}, format="json")
+    assert ok.status_code == 201, ok.data

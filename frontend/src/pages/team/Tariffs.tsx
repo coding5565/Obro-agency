@@ -18,13 +18,14 @@ export function TariffsPage() {
     <>
       <PageHeader title="Tariflar va xizmatlar" subtitle="Narx o‘zgarsa yangi versiya qo‘shiladi. Ishlab turgan loyihalar eski narxda qoladi." />
       <div className="grid gap-4 lg:grid-cols-3">
-        {tariffs.data?.map((t) => {
+        {[...(tariffs.data ?? [])].sort((a, b) => Number(b.is_active) - Number(a.is_active)).map((t) => {
           const v = t.current_version
           return (
-            <Card key={t.id} cut className={t.code === 'standard' ? 'border-gold' : ''}>
+            <Card key={t.id} cut className={t.code === 'standard' ? 'border-gold' : t.is_active ? '' : 'opacity-60'}>
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 font-display text-[18px] font-semibold">{t.name}</div>
                 {t.code === 'standard' && <Badge tone="dark">ENG MAQBUL</Badge>}
+                {!t.is_active && <Badge tone="draft">Sotilmaydi</Badge>}
               </div>
               {v && (
                 <>
@@ -38,7 +39,7 @@ export function TariffsPage() {
                 </>
               )}
               <p className="mt-3 text-[12.5px] text-muted">{t.description}</p>
-              {can('catalog.manage') && <Button variant="ghost" className="mt-3 w-full" onClick={() => setEditing(t)}>Yangi narx / tarkib</Button>}
+              {can('catalog.manage') && t.is_active && <Button variant="ghost" className="mt-3 w-full" onClick={() => setEditing(t)}>Yangi narx / tarkib</Button>}
             </Card>
           )
         })}

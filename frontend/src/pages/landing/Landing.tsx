@@ -17,7 +17,7 @@ const PHONE_TEXT = '+998 93 644 40 39'
 
 const NAV: [string, string][] = [['#tariflar', 'Tariflar'], ['#xizmatlar', 'Nima qilamiz'], ['#kabinet', 'Kabinet'], ['#savollar', 'Savollar'], ['#aloqa', 'Aloqa']]
 
-type TierName = 'Mini' | 'Lite' | 'Basic' | 'Standard' | 'Premium'
+type TierName = 'Lite' | 'Basic' | 'Standard' | 'Premium'
 
 interface Tier { name: TierName; price: number; post: number; stories: number; reels: number; extras: string[]; studio: boolean; stage: string; forWhom: string }
 
@@ -25,7 +25,6 @@ const TARGET = 'Target reklama sozlamalari'
 const PLAN = '1 oylik kontent-reja'
 
 const TIERS: Tier[] = [
-  { name: 'Mini', price: 300, post: 4, stories: 8, reels: 8, extras: [PLAN], studio: false, stage: 'Ilk qadam', forWhom: 'Ijtimoiy tarmoqlarda ilk qadamni qo‘yayotgan kichik bizneslar va yakka tadbirkorlar uchun.' },
   { name: 'Lite', price: 500, post: 6, stories: 10, reels: 10, extras: [TARGET, PLAN], studio: false, stage: 'Sinab ko‘raman', forWhom: 'Sahifasini muntazam yuritishni va reklamani sinab ko‘rishni boshlamoqchi bo‘lgan kichik bizneslar uchun.' },
   { name: 'Basic', price: 800, post: 8, stories: 15, reels: 12, extras: [TARGET, PLAN], studio: false, stage: 'Tartibga solaman', forWhom: 'Yangi bizneslar, shaxsiy brendlar va ijtimoiy tarmoqlarini tartibga keltirmoqchi bo‘lgan kompaniyalar uchun.' },
   { name: 'Standard', price: 1000, post: 10, stories: 20, reels: 14, extras: ['Profilni optimallashtirish', TARGET, PLAN], studio: true, stage: 'Rivojlanyapman', forWhom: 'Faoliyatini tizimli yo‘lga qo‘yishni, brend imijini yaxshilashni va sifatli kontent orqali yangi mijozlarni jalb qilishni istagan bizneslar uchun.' },
@@ -92,7 +91,7 @@ function SectionTitle({ kicker, children, sub }: { kicker: string; children: Rea
 }
 
 function Hero() {
-  const standard = TIERS[3]
+  const standard = TIERS.find((t) => t.name === 'Standard')!
   return (
     <section id="bosh" className="relative isolate overflow-hidden bg-gold text-ink">
       <TargetMark size={460} color="#121210" className="pointer-events-none absolute -top-24 -right-40 -z-10 opacity-[0.07] sm:-right-24" />
@@ -104,7 +103,7 @@ function Hero() {
             Kontent, reklama va tahlil — bitta tizimda. Hammasini telefoningizdagi kabinetda ko‘rib turasiz.
           </p>
           <ul className="mt-4 grid max-w-[520px] grid-cols-3 gap-2 text-center">
-            {[['5 ta', 'tarif'], ['$300', 'dan, oyiga'], ['CRM', 'kabinet har tarifda']].map(([big, small]) => (
+            {[['4 ta', 'tarif'], ['$500', 'dan, oyiga'], ['CRM', 'kabinet har tarifda']].map(([big, small]) => (
               <li key={big} className="rounded-2xl bg-white/70 px-2 py-2.5">
                 <b className="block font-display text-[19px] leading-none sm:text-[22px]">{big}</b>
                 <span className="mt-1 block text-[12px] leading-tight font-semibold text-text-2">{small}</span>
@@ -178,7 +177,6 @@ function TierCard({ tier }: { tier: Tier }) {
           <li key={line} className="flex items-start gap-2"><Check size={16} className={`mt-0.5 shrink-0 ${best ? 'text-gold' : 'text-ok'}`} />{line}</li>
         ))}
         {tier.studio && <li className="flex items-start gap-2"><Check size={16} className="mt-0.5 shrink-0 text-gold" />Bonus: studiya</li>}
-        {tier.name === 'Mini' && <li className="flex items-start gap-2 text-text-2"><X size={16} className="mt-0.5 shrink-0" />Target reklama sozlash kirmaydi</li>}
       </ul>
       <p className={`mt-3 text-[13px] leading-snug ${best ? 'text-ivory/70' : 'text-text-2'}`}>{tier.forWhom}</p>
       <a href={telegramFor(tier.name)} target="_blank" rel="noreferrer"
@@ -191,7 +189,7 @@ function TierCard({ tier }: { tier: Tier }) {
 
 function Tariffs() {
   // Telefonda tavsiya etilgan tarif birinchi ko'rinadi, keyin qolganlari kattasidan kichigiga.
-  const order: TierName[] = ['Standard', 'Premium', 'Basic', 'Lite', 'Mini']
+  const order: TierName[] = ['Standard', 'Premium', 'Basic', 'Lite']
   const mobile = order.map((name) => TIERS.find((t) => t.name === name)!)
   return (
     <section id="tariflar" className="mx-auto max-w-[1240px] px-5 py-14 sm:px-8 lg:py-24">
@@ -199,7 +197,7 @@ function Tariffs() {
         Tariflar va <span className="mark">narxlar</span>
       </SectionTitle>
       <div className="grid gap-4 lg:hidden">{mobile.map((t) => <TierCard key={t.name} tier={t} />)}</div>
-      <div className="hidden gap-3 lg:grid lg:grid-cols-5">{TIERS.map((t) => <TierCard key={t.name} tier={t} />)}</div>
+      <div className="hidden gap-3 lg:grid lg:grid-cols-4">{TIERS.map((t) => <TierCard key={t.name} tier={t} />)}</div>
       <p className="mt-5 rounded-2xl bg-gold-soft p-4 text-[14px] leading-relaxed font-semibold">
         Reklama budjeti, alohida suratga olish kunlari, model va lokatsiya paket narxiga kirmaydi — alohida kelishiladi.
       </p>

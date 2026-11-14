@@ -135,7 +135,7 @@ function ProjectForm({ clientId, onClose, onSaved }: { clientId: number; onClose
         <Field label="Tarif" hint="Narx shu kundagi tarif versiyasidan qotiriladi">
           <Select value={versionId} onChange={(e) => setVersionId(e.target.value)} required>
             <option value="">Tanlang…</option>
-            {tariffs.data?.filter((t) => t.current_version).map((t) => (
+            {tariffs.data?.filter((t) => t.is_active && t.current_version).map((t) => (
               <option key={t.id} value={t.current_version!.id}>{t.name} — {money(t.current_version!.price, t.current_version!.currency)}/oy</option>
             ))}
           </Select>
