@@ -194,8 +194,9 @@ html.landing-open {
 .landing a:focus-visible,
 .landing button:focus-visible,
 .landing summary:focus-visible {
-  outline: 2px solid var(--color-ink);
+  outline: 2px solid var(--color-gold-deep);
   outline-offset: 3px;
+  box-shadow: 0 0 0 5px var(--color-ink);
 }
 
 .landing details summary::-webkit-details-marker {
@@ -243,5 +244,21 @@ html.landing-open {
 
   .landing .burn span {
     opacity: 1;
+  }
+}
+
+/* «Pastga suring» belgisi: sahifa slayd emasligini, davomi borligini ko'rsatadi. */
+.landing .scroll-cue svg {
+  animation: cue 1.6s ease-in-out infinite;
+}
+
+@keyframes cue {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing .scroll-cue svg {
+    animation: none;
   }
 }

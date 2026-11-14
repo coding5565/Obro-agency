@@ -8,6 +8,14 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: '1.16',
+    date: '2026-11-14',
+    title: 'Sayt telefonda sodda',
+    changes: [
+      { area: 'obroagency.uz', items: ['Telefonda oddiy pastga suriladigan sahifa: slayd effekti olib tashlandi, «Pastga suring» belgisi', '5 ta tarif kartochkasi birdaniga ko‘rinadi, har birida «Tanlash» tugmasi Telegram’ga yozadi', 'Birinchi ekranda asosiy narsa: nima qilamiz, narx qanchadan, qanday bog‘lanish'] },
+    ],
+  },
+  {
     version: '1.15',
     date: '2026-11-13',
     title: 'Sotuv skripti',
