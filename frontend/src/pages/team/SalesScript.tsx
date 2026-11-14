@@ -216,7 +216,7 @@ export function SalesScriptModal({ contactName, business, source, onClose }: { c
             </Step>
             <Step title="Eng kuchli farqimiz: mijoz kabineti (CRM)">
               <Say>«Boshqa agentliklarda nima bo‘layotganini bilmaysiz. Bizda telefoningizda kabinet bor: kontent kalendari, har bir videoni o‘zingiz tasdiqlaysiz, lidlar va natijalar ko‘rinib turadi.»</Say>
-              <Tip>Kabinetni telefoningizda jonli ko‘rsating: bu juda ta’sir qiladi.</Tip>
+              <Tip>Kabinetni telefoningizda jonli ko‘rsating, lekin faqat namuna (demo) kabinetni: boshqa mijozning lidlari va to‘lovlarini ko‘rsatmang.</Tip>
             </Step>
             <Step title="Halol bo‘ling">
               <Bullets items={['Mijoz nomini aytishdan oldin undan ruxsat oling', 'Natija raqamlarini to‘qimang, bo‘lmasa portfolio va jarayonni ko‘rsating', 'Studiya kabi bonusning narxini aytsangiz, aniq raqamni biling']} />
@@ -239,7 +239,7 @@ export function SalesScriptModal({ contactName, business, source, onClose }: { c
               <Say>«Zo‘r! U qancha natija beryapti? Biz uning o‘rniga emas, unga yordam bera olamiz: videolar, target, strategiya.»</Say>
             </Step>
             <Step title="«Natijaga kafolat berasizmi?»">
-              <Say>«Sotuv soniga kafolat bera olmayman, buni kim bersa, aldaydi. Lekin kelishilgan kontent soni va sifati kafolatlanadi, hammasini kabinetingizda har kuni ko‘rib turasiz. Birinchi oy natijasini birga tahlil qilamiz.»</Say>
+              <Say>«Muayyan savdo yoki lidlar sonini kafolatlay olmaymiz: natija sohangiz, taklifingiz, auditoriya va reklama byudjetiga bog‘liq. Buni oldindan ochiq aytamiz. Tarifdagi kontent soni shartnomada yoziladi, bajarilayotgan ishni esa kabinetingizda har kuni ko‘rib turasiz. Birinchi oy natijasini birga tahlil qilamiz.»</Say>
             </Step>
             <Step title="«Telegram’ga tashlab qo‘ying»">
               <Say>«Tashlayman. Lekin sizga mos tarifni aniq aytishim uchun 2 ta savol berib olay…»</Say>
